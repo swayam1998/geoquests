@@ -154,7 +154,7 @@ flowchart TB
 
 | Service | Responsibilities |
 |---------|-----------------|
-| **Auth Service** | `fastapi-users` library with JWT tokens, Google OAuth, magic link (passwordless email) |
+| **Auth Service** | Custom implementation with `httpx-oauth` (Google OAuth), `resend` (magic links), `python-jose` (JWT tokens) |
 | **Quest Service** | Create/list/search quests, geospatial queries, quest chains |
 | **Submission Service** | Image upload, verification orchestration |
 | **Social Service** | Friends, follows, activity feed, sharing |

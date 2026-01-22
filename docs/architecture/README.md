@@ -40,11 +40,24 @@ A platform for creating and completing **real-world quests** - location-based ch
 | **Frontend** | Next.js 14 (App Router) | SSR, great DX, React ecosystem |
 | **Backend** | FastAPI (Python) | Async, typed, ML/image processing libs |
 | **Database** | PostgreSQL + PostGIS | Geospatial queries at scale |
+| **Auth** | Custom (httpx-oauth, python-jose, resend) | OAuth + Magic Link, full control |
+| **Email** | Resend (free tier: 3,000/month) | Magic link emails, high deliverability |
 | **Cache** | Redis | Sessions, rate limiting, real-time |
 | **Storage** | Cloudflare R2 | Cheap egress for images |
 | **AI** | OpenAI GPT-4 + Vision | Content validation, matching |
 | **Payments** | Stripe Connect | Marketplace split payments |
 | **Maps** | Mapbox GL JS | Beautiful, fast map rendering |
+
+### Authentication Libraries
+
+| Library | Purpose |
+|---------|---------|
+| **httpx-oauth** | OAuth 2.0 client (Google, GitHub, etc.) |
+| **python-jose[cryptography]** | JWT token encoding/decoding |
+| **resend** | Email sending (magic links) |
+| **itsdangerous** | Secure token generation for magic links |
+| **sqlalchemy** | ORM for database models |
+| **alembic** | Database migrations |
 
 ## 🔑 Key Concepts
 

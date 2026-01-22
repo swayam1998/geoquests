@@ -137,15 +137,15 @@ export default function HomePage() {
 
   // Memoize handlers to prevent map re-renders
   const handleQuestClick = useCallback((quest: Quest) => {
-    console.log("Quest clicked:", quest);
+    // TODO: Navigate to quest detail page
   }, []);
 
   const handleIdeaClick = (idea: QuestIdea) => {
-    console.log("Idea clicked:", idea);
+    // TODO: Handle quest idea click
   };
 
   const handleCreateQuest = () => {
-    console.log("Create quest clicked");
+    // TODO: Navigate to create quest page
   };
 
   // Calculate dynamic styles based on scroll progress
@@ -193,7 +193,7 @@ export default function HomePage() {
   return (
     <div ref={containerRef} className="min-h-screen">
       {/* Header */}
-      <Header isLoggedIn={false} />
+      <Header />
 
       {/* Hero Section - Sticky container for scroll effect */}
       <div className="relative h-[200vh]">
