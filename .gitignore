@@ -17,6 +17,13 @@ Thumbs.db
 # Logs
 *.log
 logs/
+backend.log
+frontend.log
+
+# Process IDs
+*.pid
+backend.pid
+frontend.pid
 
 # Python (for future backend)
 __pycache__/
