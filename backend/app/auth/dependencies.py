@@ -65,3 +65,42 @@ async def get_current_user(
         )
     
     return user
+
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
+    db: Session = Depends(get_db)
+) -> User | None:
+    """Get current authenticated user from JWT token (optional).
+    
+    This dependency:
+    1. Extracts JWT token from Authorization header (if present)
+    2. Verifies token is valid
+    3. Gets user from database
+    4. Returns None if no token or invalid token
+    
+    Args:
+        credentials: HTTPBearer credentials containing token (optional)
+        db: Database session
+        
+    Returns:
+        User object if authenticated, None otherwise
+    """
+    if credentials is None:
+        return None
+    
+    token = credentials.credentials
+    payload = verify_token(token, token_type="access")
+    
+    if payload is None:
+        return None
+    
+    user_id = payload.get("sub")
+    if user_id is None:
+        return None
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or not user.is_active:
+        return None
+    
+    return user

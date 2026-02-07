@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "noreply@resend.dev"
     
+    # Image uploads
+    UPLOAD_DIR: str = "uploads"
+    MAX_IMAGE_SIZE_MB: int = 10
+    ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/jpg"]
+    API_URL: str = "http://localhost:8000"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
