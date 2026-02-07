@@ -281,6 +281,351 @@ export const authAPI = {
 };
 
 /**
+ * Quest API methods
+ */
+export const questAPI = {
+  /**
+   * Create a new quest
+   */
+  createQuest: async (data: {
+    title: string;
+    description: string;
+    lat: number;
+    lng: number;
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    is_paid?: boolean;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
+    id: string;
+    title: string;
+    description: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    share_link?: string;
+    created_at: string;
+  }> => {
+    return apiRequest('/quests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Get list of quests
+   */
+  getQuests: async (params?: {
+    creator_id?: string;
+    visibility?: 'public' | 'private';
+    status?: 'draft' | 'active' | 'completed' | 'archived';
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<{
+    id: string;
+    creator_id: string;
+    title: string;
+    description: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    has_joined?: boolean | null;
+    start_date?: string;
+    end_date?: string;
+    status: string;
+    created_at: string;
+    updated_at?: string;
+  }>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.creator_id) queryParams.append('creator_id', params.creator_id);
+    if (params?.visibility) queryParams.append('visibility', params.visibility);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `/quests?${queryString}` : '/quests';
+    
+    return apiRequest(url);
+  },
+
+  /**
+   * Get a single quest by ID or slug
+   */
+  getQuest: async (idOrSlug: string): Promise<{
+    id: string;
+    creator_id: string;
+    title: string;
+    description: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    is_paid: boolean;
+    slug: string | null;
+    share_link: string | null;
+    participant_count: number;
+    has_joined: boolean | null;
+    start_date?: string;
+    end_date?: string;
+    status: string;
+    created_at: string;
+    updated_at?: string;
+  }> => {
+    return apiRequest(`/quests/${idOrSlug}`);
+  },
+
+  /**
+   * Join a quest
+   */
+  joinQuest: async (questId: string): Promise<{ message: string }> => {
+    return apiRequest(`/quests/${questId}/join`, {
+      method: 'POST',
+    });
+  },
+
+  /**
+   * Get shareable link for a quest
+   */
+  getQuestShareLink: async (questId: string): Promise<{
+    share_link: string;
+    can_share: boolean;
+  }> => {
+    return apiRequest(`/quests/${questId}/share-link`);
+  },
+};
+
+/**
+ * User API methods
+ */
+export const userAPI = {
+  /**
+   * Get user profile with statistics
+   */
+  getUser: async (userId: string): Promise<{
+    id: string;
+    email: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    is_active: boolean;
+    is_verified: boolean;
+    created_at: string;
+    updated_at: string | null;
+    quests_created_count: number;
+    quests_joined_count: number;
+    quests_completed_count: number;
+  }> => {
+    return apiRequest(`/users/${userId}`);
+  },
+
+  /**
+   * Get quests created by a user
+   */
+  getUserCreatedQuests: async (
+    userId: string,
+    params?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Array<{
+    id: string;
+    creator_id: string;
+    title: string;
+    description: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    is_paid: boolean;
+    slug: string | null;
+    share_link: string | null;
+    participant_count: number;
+    has_joined: boolean | null;
+    start_date?: string;
+    end_date?: string;
+    status: string;
+    created_at: string;
+    updated_at?: string;
+  }>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `/users/${userId}/quests/created?${queryString}` : `/users/${userId}/quests/created`;
+    
+    return apiRequest(url);
+  },
+
+  /**
+   * Get quests joined by a user
+   */
+  getUserJoinedQuests: async (
+    userId: string,
+    params?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Array<{
+    id: string;
+    creator_id: string;
+    title: string;
+    description: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    is_paid: boolean;
+    slug: string | null;
+    share_link: string | null;
+    participant_count: number;
+    has_joined: boolean | null;
+    start_date?: string;
+    end_date?: string;
+    status: string;
+    created_at: string;
+    updated_at?: string;
+    joined_at: string;
+    participation_status: string;
+  }>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `/users/${userId}/quests/joined?${queryString}` : `/users/${userId}/quests/joined`;
+    
+    return apiRequest(url);
+  },
+};
+
+/**
+ * Submission API methods
+ */
+export const submissionAPI = {
+  /**
+   * Submit a photo to complete a quest
+   */
+  submitQuestPhoto: async (
+    questId: string,
+    imageFile: File,
+    location: { lat: number; lng: number; accuracy?: number },
+    capturedAt: string
+  ): Promise<{
+    id: string;
+    quest_id: string;
+    explorer_id: string;
+    image_url: string;
+    captured_location: { lat: number; lng: number };
+    captured_accuracy?: number;
+    captured_at: string;
+    verification_result?: any;
+    content_match_score?: number;
+    quality_score?: number;
+    faces_detected: number;
+    faces_blurred: number;
+    status: string;
+    rejection_reason?: string;
+    submitted_at: string;
+  }> => {
+    const token = tokenStorage.getAccessToken();
+    if (!token) {
+      throw new APIError('Not authenticated', 401);
+    }
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('quest_id', questId);
+    formData.append('location', JSON.stringify(location));
+    formData.append('captured_at', capturedAt);
+
+    const response = await fetch(`${API_BASE_URL}/submissions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new APIError(
+        errorData.message || `Request failed: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get a submission by ID
+   */
+  getSubmission: async (submissionId: string): Promise<{
+    id: string;
+    quest_id: string;
+    explorer_id: string;
+    image_url: string;
+    captured_location: { lat: number; lng: number };
+    captured_accuracy?: number;
+    captured_at: string;
+    verification_result?: any;
+    content_match_score?: number;
+    quality_score?: number;
+    faces_detected: number;
+    faces_blurred: number;
+    status: string;
+    rejection_reason?: string;
+    submitted_at: string;
+  }> => {
+    return apiRequest(`/submissions/${submissionId}`);
+  },
+
+  /**
+   * Get all submissions for a quest (quest creator only)
+   */
+  getQuestSubmissions: async (questId: string): Promise<Array<{
+    id: string;
+    quest_id: string;
+    explorer_id: string;
+    image_url: string;
+    captured_location: { lat: number; lng: number };
+    captured_accuracy?: number;
+    captured_at: string;
+    verification_result?: any;
+    content_match_score?: number;
+    quality_score?: number;
+    faces_detected: number;
+    faces_blurred: number;
+    status: string;
+    rejection_reason?: string;
+    submitted_at: string;
+  }>> => {
+    return apiRequest(`/submissions/quest/${questId}`);
+  },
+};
+
+/**
  * Generic API request method
  */
 export const api = {

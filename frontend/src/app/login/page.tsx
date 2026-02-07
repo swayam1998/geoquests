@@ -1,22 +1,39 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthContext();
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated } = useAuthContext();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const returnUrl = sessionStorage.getItem('returnUrl') || '/';
+      router.push(returnUrl);
+    }
+  }, [isAuthenticated, router]);
 
   /**
    * Handle Google OAuth login
    */
   const handleGoogleLogin = () => {
+    // Preserve returnTo parameter if present
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo) {
+      // Store in sessionStorage for after auth callback
+      const currentUrl = window.location.pathname + window.location.search;
+      sessionStorage.setItem('returnUrl', currentUrl);
+    }
+    
     const authUrl = authAPI.getGoogleAuthUrl();
     window.location.href = authUrl;
   };
@@ -47,27 +64,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-400 to-blue-600 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-hero-bg via-hero-bg/80 to-hero-bg px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 group">
-            <span className="text-4xl transition-transform duration-300 group-hover:scale-110">📍</span>
-            <span className="text-3xl font-bold text-white whitespace-nowrap tracking-tight">
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 sm:gap-2.5 group">
+            <span className="text-3xl sm:text-4xl transition-transform duration-300 group-hover:scale-110">📍</span>
+            <span className="text-2xl sm:text-3xl font-bold text-white whitespace-nowrap tracking-tight">
               GeoQuests
             </span>
           </Link>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
-          <p className="text-gray-600 mb-8">Sign in to continue exploring</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-6 sm:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
+          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Sign in to continue exploring</p>
 
           {/* Google OAuth Button */}
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 font-medium text-gray-700 mb-4"
+            className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 py-3 sm:py-3.5 bg-white border-2 border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 font-medium text-sm sm:text-base text-gray-700 mb-4 touch-manipulation"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -119,7 +136,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#1A1A1A] text-white py-3 rounded-lg font-semibold hover:bg-[#333333] active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary text-primary-foreground py-3 sm:py-3.5 rounded-lg font-semibold hover:bg-primary/80 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
             >
               {isLoading ? 'Sending...' : 'Send magic link'}
             </button>
@@ -128,11 +145,12 @@ export default function LoginPage() {
           {/* Message */}
           {message && (
             <div
-              className={`mt-4 p-3 rounded-lg ${
+              className={`mt-4 p-3 rounded-lg border ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? ''
+                  : 'bg-red-50 text-red-800 border-red-200'
               }`}
+              style={message.type === 'success' ? { backgroundColor: '#FFF5F2', color: '#B8371A', borderColor: '#FFE5D9' } : {}}
             >
               {message.text}
             </div>

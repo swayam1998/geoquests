@@ -24,6 +24,7 @@ export interface Quest {
   priceCents?: number;
   completionCount: number;
   avgRating?: number;
+  hasJoined?: boolean | null;
   countryCode: string;
   createdAt: string;
 }

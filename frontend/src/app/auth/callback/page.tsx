@@ -30,9 +30,18 @@ export default function AuthCallbackPage() {
 
         setStatus('success');
 
-        // Redirect to home after a short delay
+        // Check for return URL in sessionStorage
+        const returnUrl = sessionStorage.getItem('returnUrl');
+        const redirectPath = returnUrl || '/';
+        
+        // Clear return URL
+        if (returnUrl) {
+          sessionStorage.removeItem('returnUrl');
+        }
+
+        // Redirect after a short delay
         setTimeout(() => {
-          router.push('/');
+          router.push(redirectPath);
         }, 1500);
       } catch (err: any) {
         setStatus('error');
@@ -44,11 +53,11 @@ export default function AuthCallbackPage() {
   }, [searchParams, login, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-400 to-blue-600 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-hero-bg via-hero-bg/80 to-hero-bg px-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
         {status === 'loading' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-action-blue mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Completing sign in...</h2>
             <p className="text-gray-600">Please wait</p>
           </>
@@ -58,7 +67,8 @@ export default function AuthCallbackPage() {
           <>
             <div className="mb-4">
               <svg
-                className="w-16 h-16 text-green-500 mx-auto"
+                className="w-16 h-16 mx-auto"
+                style={{ color: '#F44D11' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -97,7 +107,7 @@ export default function AuthCallbackPage() {
             <p className="text-gray-600 mb-4">{error || 'An error occurred during sign in'}</p>
             <Link
               href="/login"
-              className="inline-block bg-[#1A1A1A] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#333333] transition-colors"
+              className="inline-block bg-primary text-primary-foreground px-6 py-2 rounded-lg font-semibold hover:bg-primary/80 transition-colors"
             >
               Try again
             </Link>
