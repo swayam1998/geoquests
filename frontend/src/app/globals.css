@@ -1,33 +1,161 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+
+/* Custom scrollbar styling */
+.quest-list-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-tertiary) var(--muted);
+}
+
+.quest-list-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.quest-list-scrollbar::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.quest-list-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 6px;
+  border: 2px solid var(--muted);
+}
+
+.quest-list-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  /* MindMarket-inspired color palette */
-  --background: #4994EF;
+  --radius: 0.625rem;
+
+  /* === STANDARD SHADCN TOKENS (light) === */
+  --background: #F5F3EF;
   --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
   --primary: #1A1A1A;
-  --primary-light: #333333;
-  --accent: #6366F1;
-  --accent-light: #818CF8;
-  --muted: #6B7280;
-  --muted-light: #9CA3AF;
-  --surface: #FFFFFF;
-  --surface-elevated: #FFFFFF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F3EF;
+  --secondary-foreground: #1A1A1A;
+  --muted: #F5F3EF;
+  --muted-foreground: #6B7280;
+  --accent: #F44D11;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
   --border: #E5E7EB;
-  --border-light: #F3F4F6;
-  --success: #10B981;
+  --input: #E5E7EB;
+  --ring: #1A1A1A;
+
+  /* === GEOQUESTS CUSTOM TOKENS (light) === */
+  --brand: #F44D11;
+  --brand-hover: #D43D0F;
+  --brand-foreground: #FFFFFF;
+  --hero-bg: #4994EF;
+  --hero-text: #2D2E2A;
+  --surface-hover: #FAFAFA;
+  --border-warm: #E8E6E2;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --page-gradient-from: #EFF6FF;
+  --page-gradient-via: #FFFFFF;
+  --page-gradient-to: #FAF5FF;
+  --action-blue: #3B82F6;
+  --action-blue-hover: #2563EB;
+  --tab-active: #2563EB;
+  --success: #F44D11;
   --warning: #F59E0B;
+
+  /* === CHART TOKENS === */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* === SIDEBAR TOKENS === */
+  --sidebar: #FAFAFA;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #1A1A1A;
+  --sidebar-primary-foreground: #FAFAFA;
+  --sidebar-accent: #F5F3EF;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #9CA3AF;
 }
 
 @theme inline {
+  --font-sans: var(--font-inter);
+
+  /* Standard shadcn color tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* GeoQuests custom color tokens */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-hero-bg: var(--hero-bg);
+  --color-hero-text: var(--hero-text);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-warm: var(--border-warm);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-page-gradient-from: var(--page-gradient-from);
+  --color-page-gradient-via: var(--page-gradient-via);
+  --color-page-gradient-to: var(--page-gradient-to);
+  --color-action-blue: var(--action-blue);
+  --color-action-blue-hover: var(--action-blue-hover);
+  --color-tab-active: var(--tab-active);
+
+  /* Chart tokens */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius tokens */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -68,43 +196,112 @@ body {
   overscroll-behavior: none;
 }
 
+/* Mobile-friendly touch targets */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure minimum touch target size (44x44px recommended by Apple/Google) */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improve text rendering on mobile */
+@media (max-width: 640px) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
 /* Glassmorphism */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid color-mix(in srgb, var(--card) 50%, transparent);
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.05);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Leaflet overrides */
-.leaflet-container {
+/* Google Maps overrides */
+.gm-style {
   font-family: inherit;
-  border-radius: 1rem;
 }
 
-.leaflet-popup-content-wrapper {
+.gm-style .gm-style-iw-c {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 0;
 }
 
-.leaflet-popup-content {
-  margin: 12px 16px;
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 
-.leaflet-control-zoom {
-  border: none !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+/* Reduce space between close button and content */
+.gm-style .gm-style-iw-tc {
+  margin-top: 0;
 }
 
-.leaflet-control-zoom a {
-  border-radius: 8px !important;
-  border: none !important;
+.gm-style .gm-style-iw-t::after {
+  top: 8px;
+  right: 8px;
+}
+
+.gm-style .gm-style-iw-t {
+  margin-top: 0;
+}
+
+/* Quest InfoWindow Styles - responsive width for narrow phones */
+.quest-info-window {
+  width: min(280px, calc(100vw - 32px));
+  max-width: 280px;
+  padding: 8px 16px 16px 16px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Ensure title aligns with close button - same vertical position */
+.quest-info-window h3 {
+  margin-top: 0;
+  padding-top: 0;
+  line-height: 1.25;
+}
+
+/* Align close button with title text - match the title's vertical position */
+.gm-style .gm-style-iw-t::after {
+  top: 8px;
+  right: 8px;
+}
+
+/* Adjust InfoWindow content area to align with close button */
+.gm-style .gm-style-iw-d {
+  padding-top: 0 !important;
+}
+
+.quest-info-window-hover {
+  padding: 12px 14px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-width: 200px;
+}
+
+/* Override Google Maps InfoWindow close button */
+.gm-style .gm-style-iw-t::after {
+  background: var(--card);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.gm-style-iw-d .quest-info-window,
+.gm-style-iw-d .quest-info-window-hover {
+  background: var(--card);
 }
 
 /* Safe area padding for mobile */
@@ -112,7 +309,43 @@ body {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  /* Main content: keep 8rem (pb-32) plus safe area */
+  .pb-32-safe {
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+  }
 }
+
+/* Safe area for fixed bottom elements (e.g. FAB) */
+@supports (bottom: env(safe-area-inset-bottom)) {
+  .bottom-safe {
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+  .right-safe {
+    right: max(1.5rem, env(safe-area-inset-right));
+  }
+}
+
+/* Safe area for fixed top elements (e.g. header) */
+@supports (margin-top: env(safe-area-inset-top)) {
+  .header-safe-top {
+    margin-top: max(1rem, env(safe-area-inset-top));
+  }
+  .header-safe-x {
+    margin-left: max(1rem, env(safe-area-inset-left));
+    margin-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Page content top padding (below header) with safe area for notched devices */
+.pt-page-content {
+  padding-top: calc(5rem + env(safe-area-inset-top, 0px));
+}
+@media (min-width: 640px) {
+  .pt-page-content {
+    padding-top: calc(6rem + env(safe-area-inset-top, 0px));
+  }
+}
+
 
 /* Header animations */
 @keyframes header-slide-down {
@@ -219,5 +452,72 @@ body {
 }
 
 .animate-slow-scroll {
-  animation: slow-scroll 40s linear infinite;
+  animation: slow-scroll 60s linear infinite;
+}
+
+.dark {
+  /* === STANDARD SHADCN TOKENS (dark) === */
+  --background: #141414;
+  --foreground: #F5F3EF;
+  --card: #1E1E1E;
+  --card-foreground: #F5F3EF;
+  --popover: #1E1E1E;
+  --popover-foreground: #F5F3EF;
+  --primary: #F5F3EF;
+  --primary-foreground: #1A1A1A;
+  --secondary: #262626;
+  --secondary-foreground: #F5F3EF;
+  --muted: #262626;
+  --muted-foreground: #9CA3AF;
+  --accent: #F44D11;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --border: #2A2A2A;
+  --input: #2A2A2A;
+  --ring: #6B7280;
+
+  /* === GEOQUESTS CUSTOM TOKENS (dark) === */
+  --brand: #F44D11;
+  --brand-hover: #D43D0F;
+  --brand-foreground: #FFFFFF;
+  --hero-bg: #1A3A5C;
+  --hero-text: #F5F3EF;
+  --surface-hover: #252525;
+  --border-warm: #2A2A2A;
+  --text-secondary: #9CA3AF;
+  --text-tertiary: #6B7280;
+  --page-gradient-from: #141414;
+  --page-gradient-via: #1A1A1A;
+  --page-gradient-to: #141414;
+  --action-blue: #3B82F6;
+  --action-blue-hover: #2563EB;
+  --tab-active: #3B82F6;
+  --success: #F44D11;
+  --warning: #F59E0B;
+
+  /* === CHART TOKENS (dark) === */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  /* === SIDEBAR TOKENS (dark) === */
+  --sidebar: #1E1E1E;
+  --sidebar-foreground: #F5F3EF;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #F5F3EF;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #F5F3EF;
+  --sidebar-border: #2A2A2A;
+  --sidebar-ring: #6B7280;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

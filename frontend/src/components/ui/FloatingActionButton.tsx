@@ -1,32 +1,21 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Plus } from "@phosphor-icons/react";
+
 interface FloatingActionButtonProps {
   onClick: () => void;
 }
 
 export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
   return (
-    <button
+    <Button
       onClick={onClick}
-      className="fixed bottom-8 right-8 w-16 h-16 bg-[#1A1A1A] text-white rounded-full flex items-center justify-center hover:bg-[#333333] hover:scale-110 active:scale-95 transition-all duration-300 z-40"
-      style={{
-        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2)',
-      }}
+      size="icon"
+      className="fixed bottom-8 right-8 bottom-safe right-safe w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary hover:bg-primary/80 hover:scale-110 active:scale-95 transition-all duration-300 z-40 shadow-[0_8px_30px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.2)]"
       aria-label="Create Quest"
     >
-      <svg
-        className="w-7 h-7"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2.5}
-          d="M12 4v16m8-8H4"
-        />
-      </svg>
-    </button>
+      <Plus className="w-7 h-7" weight="regular" />
+    </Button>
   );
 }

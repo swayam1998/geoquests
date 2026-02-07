@@ -27,13 +27,13 @@ export function QuestList({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
           {title}
         </h2>
         {showSeeAll && (
           <Link 
             href={seeAllHref} 
-            className="text-sm text-[#6B7280] font-medium hover:text-[#1A1A1A] transition-colors"
+            className="text-sm text-text-secondary font-medium hover:text-foreground transition-colors"
           >
             See all →
           </Link>
@@ -44,7 +44,7 @@ export function QuestList({
       {showSearch && (
         <div className="relative">
           <svg
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -60,13 +60,16 @@ export function QuestList({
             type="text"
             placeholder="Search quests..."
             onChange={(e) => onSearch?.(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 bg-white rounded-2xl text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A] border border-[#E5E7EB] shadow-sm transition-shadow hover:shadow-md"
+            className="w-full pl-12 pr-4 py-3.5 bg-card rounded-2xl text-foreground placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-foreground border border-border shadow-sm transition-shadow hover:shadow-md"
           />
         </div>
       )}
 
-      {/* Quest Cards */}
-      <div className="space-y-3">
+      {/* Quest Cards - Scrollable container showing ~10 quests */}
+      <div 
+        className="space-y-3 overflow-y-auto quest-list-scrollbar pr-2"
+        style={{ maxHeight: '750px' }}
+      >
         {quests.map((quest, index) => (
           <QuestCard
             key={quest.id}

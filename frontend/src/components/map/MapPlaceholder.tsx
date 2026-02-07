@@ -6,7 +6,7 @@ interface MapPlaceholderProps {
 
 export function MapPlaceholder({ questCount = 12 }: MapPlaceholderProps) {
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+    <div className="relative w-full h-full bg-gradient-to-br from-blue-50 flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, #EFF6FF, #FFF5F2)' }}>
       {/* Mock Map Background */}
       <div className="absolute inset-0 opacity-30">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">

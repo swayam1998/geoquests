@@ -1,7 +1,7 @@
 "use client";
 
 import { QuestIdea } from "@/types";
-import Link from "next/link";
+import { Compass, ArrowRight } from "@phosphor-icons/react";
 
 interface QuestIdeasCarouselProps {
   ideas: QuestIdea[];
@@ -14,50 +14,49 @@ export function QuestIdeasCarousel({ ideas, onIdeaClick }: QuestIdeasCarouselPro
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-          Create a Quest
-        </h2>
-        <Link 
-          href="/ideas" 
-          className="text-sm text-[#6B7280] font-medium hover:text-[#1A1A1A] transition-colors"
-        >
-          See all →
-        </Link>
-      </div>
-
-      {/* Subtitle */}
-      <p className="text-[#6B7280] text-base">
-        Get inspired! Pick an idea to get started.
-      </p>
-
       {/* Carousel with slow auto-scroll */}
       <div className="overflow-hidden -mx-1">
         <div 
-          className="flex gap-4 px-1 animate-slow-scroll hover:[animation-play-state:paused]"
+          className="flex gap-5 px-1 animate-slow-scroll hover:[animation-play-state:paused]"
           style={{
             width: "fit-content",
           }}
         >
           {duplicatedIdeas.map((idea, index) => (
-            <button
+            <div
               key={`${idea.id}-${index}`}
-              onClick={() => onIdeaClick?.(idea)}
-              className="flex-shrink-0 w-36 p-5 bg-white rounded-2xl hover:shadow-lg transition-all duration-200 text-center border border-[#E5E7EB] group hover:-translate-y-1"
+              className="shrink-0 w-72 min-h-64 p-5 bg-card rounded-2xl border border-border group hover:-translate-y-1 hover:shadow-lg transition-all duration-200 flex flex-col"
             >
-              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">{idea.icon}</div>
-              <p className="text-sm font-semibold text-[#1A1A1A] line-clamp-2">
+              {/* Icon + label */}
+              <div className="flex items-center gap-2 mb-3">
+                <Compass className="w-5 h-5 text-brand" weight="duotone" />
+                <span className="text-xs font-medium text-brand uppercase tracking-wide">
+                  Quests
+                </span>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-base font-semibold text-foreground leading-snug mb-2 line-clamp-1">
                 {idea.title}
+              </h3>
+
+              {/* Description - full text visible */}
+              <p className="text-sm text-text-secondary leading-relaxed mb-4 flex-1">
+                {idea.description}
               </p>
-              <span className={`inline-block mt-3 text-xs font-medium px-3 py-1 rounded-full ${
-                idea.category === "practical" 
-                  ? "bg-[#FEF3C7] text-[#D97706]" 
-                  : "bg-[#F3F4F6] text-[#4B5563]"
-              }`}>
-                {idea.category === "practical" ? "Practical" : "Personal"}
-              </span>
-            </button>
+
+              {/* Create Quest button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onIdeaClick?.(idea);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand text-brand-foreground text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors w-full group/btn"
+              >
+                Create Quest
+                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" weight="bold" />
+              </button>
+            </div>
           ))}
         </div>
       </div>

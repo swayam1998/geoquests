@@ -1,185 +1,186 @@
 import { QuestIdea } from "@/types";
 
 export const questIdeas: QuestIdea[] = [
-  // Emotional Ideas
+  // Disaster & Emergency
   {
-    id: "where-we-met",
-    title: "Where We First Met",
-    description: "Send someone special to the exact spot where you first met. Let them rediscover that moment.",
-    icon: "💝",
-    category: "emotional",
-    tips: [
-      "Pick the exact spot, not just the building",
-      "Add a personal hint only they'd understand",
-      "Share it on their birthday or anniversary",
-    ],
+    id: "road-condition",
+    title: "Road Condition After Storm",
+    description:
+      "Is the road passable? Take a photo of the road surface showing any damage, debris, or flooding.",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "secret-coffee",
-    title: "Secret Coffee Spot",
-    description: "Share that cafe only locals know about. The one tourists never find.",
-    icon: "☕",
-    category: "emotional",
-    tips: [
-      "Describe what makes it special",
-      "Mention your favorite drink or seat",
-      "Best time to visit",
-    ],
+    id: "flood-level",
+    title: "Flood Level Check",
+    description:
+      "How flooded is this street or intersection? Photo showing water level and whether it's safe to drive or walk.",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "sunset-view",
-    title: "Best Sunset View",
-    description: "Your favorite spot to watch the sunset. Share the magic with others.",
-    icon: "🌅",
-    category: "emotional",
-    tips: [
-      "Mention the best time of year",
-      "Describe what you see",
-      "Any tips for getting there",
-    ],
+    id: "building-damage",
+    title: "Building Damage Assessment",
+    description:
+      "Assess this building: photo of any structural damage and street access for relief planning.",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "street-art",
-    title: "Street Art Hunt",
-    description: "Found an amazing mural hidden in an alley? Let others discover it too.",
-    icon: "🎨",
-    category: "emotional",
-    tips: [
-      "Describe the art style or theme",
-      "Include nearby landmarks",
-      "Note if it might be temporary",
-    ],
+    id: "relief-point",
+    title: "Shelter / Relief Point Status",
+    description:
+      "Is this shelter or relief point open and accessible? Photo of entrance and any signage.",
+    icon: "compass",
+    category: "practical",
+  },
+  // Roads & Travel
+  {
+    id: "snow-cleared",
+    title: "Snow Clearance Check",
+    description:
+      "Is the snow cleared from this road? Photo of the road surface — safe to drive?",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "childhood-spot",
-    title: "Childhood Playground",
-    description: "Share your favorite childhood spot with someone special.",
-    icon: "🏠",
-    category: "emotional",
-    tips: [
-      "Share a memory from there",
-      "Describe what made it special",
-      "How has it changed?",
-    ],
+    id: "bridge-open",
+    title: "Bridge / Pass Open?",
+    description:
+      "Is this bridge or mountain pass open? Photo of the crossing or any closure signs.",
+    icon: "compass",
+    category: "practical",
   },
+  // Local Business & Amenities
   {
-    id: "hidden-waterfall",
-    title: "Hidden Waterfall",
-    description: "That nature spot you discovered by accident. A secret worth sharing.",
-    icon: "🌊",
-    category: "emotional",
-    tips: [
-      "Describe the trail or path",
-      "Best season to visit",
-      "What to bring",
-    ],
+    id: "storefront-check",
+    title: "Business Storefront Check",
+    description:
+      "How does this business look from the street? Photo of the storefront and entrance — is it open?",
+    icon: "compass",
+    category: "practical",
   },
-  {
-    id: "best-bench",
-    title: "Best Bench in Town",
-    description: "Sometimes it's just about sitting and watching. Share your favorite thinking spot.",
-    icon: "🪑",
-    category: "emotional",
-    tips: [
-      "What makes the view special?",
-      "Best time of day",
-      "What do you think about there?",
-    ],
-  },
-  // Practical Ideas
   {
     id: "queue-check",
-    title: "Queue Length Check",
-    description: "Need to know if somewhere is busy before you go? Get a real photo of the current line.",
-    icon: "⏱️",
+    title: "Queue / Wait Time Check",
+    description:
+      "How long is the queue at this location right now? One photo from the back of the line.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Great for restaurants, government offices",
-      "Theme park rides, store releases",
-      "Be specific about which entrance",
-    ],
   },
+  // Traffic & Parking
   {
     id: "parking-check",
-    title: "Parking Situation",
-    description: "Is there parking available? Get a verified photo before you drive there.",
-    icon: "🅿️",
+    title: "Parking Availability",
+    description:
+      "How full is the parking lot? Photo from a clear vantage point showing available spaces.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Specify the parking lot or street",
-      "Include time of day in description",
-      "Mention if paid or free matters",
-    ],
   },
   {
-    id: "crowd-check",
-    title: "Is it Crowded?",
-    description: "See how busy a place is right now. Beach, gym, cafe, or park.",
-    icon: "👥",
+    id: "traffic-check",
+    title: "Traffic Conditions",
+    description:
+      "How is the traffic at this intersection right now? One photo showing current conditions.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Ask for a wide shot",
-      "Specify indoor or outdoor",
-      "Time-sensitive quests work best",
-    ],
   },
+  // Neighborhood & Community
+  {
+    id: "playground-condition",
+    title: "Playground Condition",
+    description:
+      "Is the playground in good condition? Photo of equipment and surface — safe for kids?",
+    icon: "compass",
+    category: "practical",
+  },
+  {
+    id: "school-route",
+    title: "School Route Safety",
+    description:
+      "Is the school route safe? Photo of the critical segment — any flooding, ice, or obstruction?",
+    icon: "compass",
+    category: "practical",
+  },
+  // Environmental
   {
     id: "trail-conditions",
     title: "Trail Conditions",
-    description: "How muddy, snowy, or clear is the hiking path? Know before you go.",
-    icon: "🥾",
+    description:
+      "Is the trail clear of fallen trees or debris? Photo of the path showing current conditions.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Specify the section of trail",
-      "Ask about water crossings",
-      "Recent weather context helps",
-    ],
   },
   {
-    id: "is-it-open",
-    title: "Is it Open?",
-    description: "Verify if a small shop, food truck, or pop-up is actually open today.",
-    icon: "🚪",
+    id: "river-level",
+    title: "River / Creek Water Level",
+    description:
+      "How high is the river or creek? Photo showing water level compared to the banks.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Great for irregular hours",
-      "Food trucks and markets",
-      "Holiday schedules",
-    ],
+  },
+  // Journalist / Verification
+  {
+    id: "ground-truth",
+    title: "Ground Truth Verification",
+    description:
+      "Reports coming in about this location. Can you send a photo of the current situation from a safe distance?",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "beach-status",
-    title: "Beach Status",
-    description: "Is it crowded? Clean? Safe to swim? Get the real picture.",
-    icon: "🏖️",
+    id: "crowd-assessment",
+    title: "Crowd / Event Assessment",
+    description:
+      "How crowded is this venue or public space right now? One wide photo showing the scene.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Ask about water conditions",
-      "Lifeguard on duty?",
-      "Specific section of beach",
-    ],
+  },
+  // Construction & Real Estate
+  {
+    id: "construction-progress",
+    title: "Construction Progress",
+    description:
+      "Document the construction site — fencing, machinery, and progress. Is the project on track?",
+    icon: "compass",
+    category: "practical",
   },
   {
-    id: "construction-update",
-    title: "Construction Update",
-    description: "Is the road or path still blocked? Get an update before planning your route.",
-    icon: "🚧",
+    id: "property-check",
+    title: "Property Condition Check",
+    description:
+      "Current state of the property: photo of the front and any 'for sale' or construction signs.",
+    icon: "compass",
     category: "practical",
-    tips: [
-      "Useful for commute planning",
-      "Ask about alternate routes",
-      "Is there a detour sign?",
-    ],
+  },
+  // Emergency & Safety
+  {
+    id: "emergency-access",
+    title: "Emergency Vehicle Access",
+    description:
+      "Can ambulances or fire trucks access this address? Photo of road width, obstructions, or gates.",
+    icon: "compass",
+    category: "practical",
+  },
+  {
+    id: "power-lines-down",
+    title: "Power Lines / Trees Down",
+    description:
+      "Document any downed power lines or fallen trees at this location — one clear photo for utilities.",
+    icon: "compass",
+    category: "practical",
   },
 ];
 
-// Get shuffled mix of emotional and practical ideas
-export function getShuffledIdeas(count: number = 8): QuestIdea[] {
+// Get shuffled mix of ideas
+export function getShuffledIdeas(count: number = 10): QuestIdea[] {
   const shuffled = [...questIdeas].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
 
 // Get ideas by category
-export function getIdeasByCategory(category: "emotional" | "practical"): QuestIdea[] {
+export function getIdeasByCategory(
+  category: "emotional" | "practical"
+): QuestIdea[] {
   return questIdeas.filter((idea) => idea.category === category);
 }
