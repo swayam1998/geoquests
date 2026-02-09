@@ -272,7 +272,7 @@ export default function UserProfilePage() {
                                 <Button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    router.push(`/quest/${questSlug}/submit`);
+                                    router.push(`/quest/${questSlug}#submit`);
                                   }}
                                   size="sm"
                                   className="w-full text-white"

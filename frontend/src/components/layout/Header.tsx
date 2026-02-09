@@ -56,7 +56,7 @@ export function Header() {
       <div className="mt-4 header-safe-top mx-4 header-safe-x animate-header-slide-down pointer-events-auto">
         {/* Apple-style frosted glass container */}
         <div 
-          className="relative rounded-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] px-3 sm:px-6 py-2 sm:py-3 bg-card/75 backdrop-blur-xl border border-card/60 dark:bg-card/80 dark:border-border/40"
+          className="relative rounded-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] px-3 sm:px-6 py-2 sm:py-3 bg-card/75 backdrop-blur-xl border border-card/60"
           style={{
             boxShadow: isScrolled 
               ? `
@@ -76,31 +76,20 @@ export function Header() {
               `,
           }}
         >
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Left: Logo */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            {/* 1. Logo */}
             <Link 
               href="/" 
               className="flex items-center gap-1.5 sm:gap-2.5 group"
             >
-              {/* Map pin icon */}
               <span className="text-xl sm:text-2xl transition-transform duration-300 group-hover:scale-110">📍</span>
               <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground whitespace-nowrap tracking-tight">
                 GeoQuests
               </span>
             </Link>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Create Quest Button - Always visible */}
-              <Button
-                asChild
-                className="font-semibold text-primary-foreground bg-primary rounded-full hover:bg-primary/80 hover:scale-105 active:scale-95 transition-all duration-300 whitespace-nowrap px-3 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm shadow-[0_4px_14px_rgba(0,0,0,0.25)]"
-              >
-                <Link href="/#map">Create Quest</Link>
-              </Button>
-
-              {/* User Menu - Only shown when authenticated */}
-              {isAuthenticated ? (
+            {/* 2. Sign in or User menu */}
+            {isAuthenticated ? (
                 <div className="relative" ref={userMenuRef}>
                   <Button
                     variant="ghost"
@@ -163,7 +152,7 @@ export function Header() {
                         <Button
                           variant="ghost"
                           onClick={handleLogout}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors justify-start"
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors justify-start"
                         >
                           <svg
                             className="w-4 h-4"
@@ -187,12 +176,19 @@ export function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 whitespace-nowrap px-2 sm:px-4 py-2 text-xs sm:text-sm"
+                  className="inline-flex items-center justify-center font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 whitespace-nowrap px-2 sm:px-4 h-9 text-xs sm:text-sm"
                 >
                   Sign in
                 </Link>
               )}
-            </div>
+
+            {/* 3. Create Quest Button - same brand style as other primary buttons */}
+            <Button
+              asChild
+              className="rounded-full bg-brand text-brand-foreground hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all duration-300 whitespace-nowrap px-3 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm"
+            >
+              <Link href="/#map">Create Quest</Link>
+            </Button>
           </div>
         </div>
       </div>

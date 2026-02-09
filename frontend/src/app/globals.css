@@ -26,7 +26,19 @@
   background: var(--text-secondary);
 }
 
-@custom-variant dark (&:is(.dark *));
+/* Film grain texture overlay — parent must already be positioned (relative, sticky, etc.) */
+.grain-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url('/images/grain.png');
+  background-repeat: repeat;
+  background-size: 250px 250px;
+}
 
 :root {
   --radius: 0.625rem;
@@ -223,12 +235,6 @@ button, a, [role="button"] {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid color-mix(in srgb, var(--card) 50%, transparent);
-}
-
-.glass-dark {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Google Maps overrides */
@@ -453,64 +459,6 @@ button, a, [role="button"] {
 
 .animate-slow-scroll {
   animation: slow-scroll 60s linear infinite;
-}
-
-.dark {
-  /* === STANDARD SHADCN TOKENS (dark) === */
-  --background: #141414;
-  --foreground: #F5F3EF;
-  --card: #1E1E1E;
-  --card-foreground: #F5F3EF;
-  --popover: #1E1E1E;
-  --popover-foreground: #F5F3EF;
-  --primary: #F5F3EF;
-  --primary-foreground: #1A1A1A;
-  --secondary: #262626;
-  --secondary-foreground: #F5F3EF;
-  --muted: #262626;
-  --muted-foreground: #9CA3AF;
-  --accent: #F44D11;
-  --accent-foreground: #FFFFFF;
-  --destructive: #DC2626;
-  --border: #2A2A2A;
-  --input: #2A2A2A;
-  --ring: #6B7280;
-
-  /* === GEOQUESTS CUSTOM TOKENS (dark) === */
-  --brand: #F44D11;
-  --brand-hover: #D43D0F;
-  --brand-foreground: #FFFFFF;
-  --hero-bg: #1A3A5C;
-  --hero-text: #F5F3EF;
-  --surface-hover: #252525;
-  --border-warm: #2A2A2A;
-  --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
-  --page-gradient-from: #141414;
-  --page-gradient-via: #1A1A1A;
-  --page-gradient-to: #141414;
-  --action-blue: #3B82F6;
-  --action-blue-hover: #2563EB;
-  --tab-active: #3B82F6;
-  --success: #F44D11;
-  --warning: #F59E0B;
-
-  /* === CHART TOKENS (dark) === */
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-
-  /* === SIDEBAR TOKENS (dark) === */
-  --sidebar: #1E1E1E;
-  --sidebar-foreground: #F5F3EF;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #F5F3EF;
-  --sidebar-accent: #262626;
-  --sidebar-accent-foreground: #F5F3EF;
-  --sidebar-border: #2A2A2A;
-  --sidebar-ring: #6B7280;
 }
 
 @layer base {

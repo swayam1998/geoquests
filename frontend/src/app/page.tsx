@@ -6,7 +6,6 @@ import { Header } from "@/components/layout/Header";
 import { QuestMap } from "@/components/map/QuestMap";
 import { QuestIdeasCarousel } from "@/components/quest/QuestIdeasCarousel";
 import { QuestsTable } from "@/components/quest/QuestsTable";
-import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 import { getShuffledIdeas } from "@/lib/quest-ideas";
 import { Quest, QuestIdea } from "@/types";
 import { questAPI } from "@/lib/api";
@@ -21,6 +20,8 @@ const convertApiQuestToQuest = (apiQuest: {
   radius_meters: number;
   visibility: 'public' | 'private';
   photo_count: number;
+  participant_count?: number;
+  submission_count?: number;
   has_joined?: boolean | null;
   status: string;
   created_at: string;
@@ -58,7 +59,7 @@ const convertApiQuestToQuest = (apiQuest: {
     categoryIcon: icon,
     visibility: apiQuest.visibility,
     status: apiQuest.status as Quest['status'],
-    completionCount: 0, // Will be populated when we add submissions
+    completionCount: apiQuest.submission_count ?? 0,
     avgRating: undefined, // Will be populated when we add ratings
     hasJoined: apiQuest.has_joined ?? null,
     countryCode: "US", // TODO: Get from location
@@ -286,20 +287,16 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleCreateQuest = () => {
-    // TODO: Navigate to create quest page
-  };
-
   return (
     <div className="min-h-screen">
       {/* Header */}
       <Header />
 
       {/* Hero Section - sticky so content scrolls over it (mindmarket pattern) */}
-      <section className="sticky top-0 z-0 h-screen overflow-hidden bg-hero-bg">
+      <section className="sticky top-0 z-0 h-screen overflow-hidden bg-hero-bg grain-overlay">
         {/* Decorative clouds - parallax, fade out with hero text */}
         <div 
-          className="absolute inset-0 pointer-events-none overflow-hidden will-change-transform"
+          className="absolute inset-0 z-2 pointer-events-none overflow-hidden will-change-transform"
           style={{ opacity: heroOpacity }}
         >
           {/* Left cloud - bottom */}
@@ -360,9 +357,9 @@ export default function HomePage() {
           {/* Description text + button */}
           <div className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 px-6 sm:px-8 md:px-10 lg:px-14 pb-4 sm:pb-6 md:pb-8 lg:pb-10 w-full md:w-[55%] lg:w-[40%]">
             <p className="text-sm sm:text-base md:text-lg lg:text-[1.75rem] text-foreground/80 leading-relaxed">
-              Create quests for others to discover, explore hidden 
+              Create quests to discover, explore hidden 
               gems in your neighborhood, and connect with your community through 
-              shared experiences—wherever they are—to help you make 
+              shared experiences wherever they are to help you make 
               meaningful connections one quest at a time.
             </p>
             <button 
@@ -419,9 +416,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton onClick={handleCreateQuest} />
     </div>
   );
 }
