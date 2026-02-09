@@ -37,3 +37,6 @@ ENV/
 
 # Node modules (already in frontend/.gitignore, but good to have at root)
 node_modules/
+
+# uploads
+/uploads

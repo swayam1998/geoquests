@@ -49,7 +49,8 @@ make test      # Run tests
 
 ## 📚 Documentation
 
-- **[Quick Start Guide](./QUICK_START.md)** - Get started fast
+- **[Quick Start Guide](./QUICK_START.md)** - Get started fast (local development)
+- **[Deploy to Railway (geoquests.io)](./docs/RAILWAY-DEPLOY-GUIDE.md)** - Step-by-step production deploy
 - **[Backend README](./backend/README.md)** - Backend documentation
 - **[Frontend README](./frontend/README.md)** - Frontend documentation
 - **[Architecture Docs](./docs/architecture/)** - System architecture

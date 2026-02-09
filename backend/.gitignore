@@ -53,5 +53,8 @@ test.db
 .DS_Store
 Thumbs.db
 
+# Uploaded images (development only; production uses volume or object storage)
+uploads/
+
 # Logs
 *.log
