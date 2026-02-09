@@ -9,7 +9,9 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # JSON schema for structured Gemini output (flat dict, no nested models)
-# Used with response_mime_type="application/json" for reliable parsing
+# Used with response_mime_type="application/json" for reliable parsing.
+# Note: Do not include "additionalProperties"; the google-genai SDK's Schema model
+# does not accept it and raises ValidationError (extra_forbidden).
 GEMINI_RESPONSE_JSON_SCHEMA = {
     "type": "object",
     "properties": {
@@ -26,7 +28,6 @@ GEMINI_RESPONSE_JSON_SCHEMA = {
         "content_match_score", "is_authentic_photo", "is_screenshot_or_screen_photo",
         "is_ai_generated", "scene_description", "grade", "reasoning", "flags",
     ],
-    "additionalProperties": False,
 }
 
 # Default result when Gemini is skipped or fails
