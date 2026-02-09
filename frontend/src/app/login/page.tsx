@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
 import { useAuthContext } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuthContext();
@@ -168,5 +168,23 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-hero-bg via-hero-bg/80 to-hero-bg px-4 py-8 sm:py-12">
+      <div className="w-full max-w-md flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }

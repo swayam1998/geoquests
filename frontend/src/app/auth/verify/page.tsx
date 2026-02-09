@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { useAuthContext } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
-export default function VerifyMagicLinkPage() {
+function VerifyMagicLinkContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthContext();
@@ -109,5 +109,25 @@ export default function VerifyMagicLinkPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function VerifyMagicLinkFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-hero-bg via-hero-bg/80 to-hero-bg px-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-action-blue mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Verifying your magic link...</h2>
+        <p className="text-gray-600">Please wait</p>
+      </div>
+    </div>
+  );
+}
+
+export default function VerifyMagicLinkPage() {
+  return (
+    <Suspense fallback={<VerifyMagicLinkFallback />}>
+      <VerifyMagicLinkContent />
+    </Suspense>
   );
 }

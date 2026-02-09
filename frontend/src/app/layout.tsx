@@ -13,12 +13,13 @@ export const metadata: Metadata = {
   title: "GeoQuests - Get a reason to explore the world",
   description: "Create and complete location-based photo quests. Share meaningful places, discover hidden gems, or get real-time crowd-sourced information.",
   keywords: ["quests", "location", "photo", "explore", "travel", "scavenger hunt"],
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
