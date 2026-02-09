@@ -17,17 +17,26 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create quest_visibility enum
+    # Create enums only if they don't exist (safe after partial runs)
     op.execute("""
-        CREATE TYPE questvisibility AS ENUM ('public', 'private')
+        DO $$ BEGIN
+            CREATE TYPE questvisibility AS ENUM ('public', 'private');
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE queststatus AS ENUM ('draft', 'active', 'completed', 'archived');
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END $$;
     """)
     
-    # Create quest_status enum
-    op.execute("""
-        CREATE TYPE queststatus AS ENUM ('draft', 'active', 'completed', 'archived')
-    """)
-    
-    # Create quests table
+    # Use create_type=False so SQLAlchemy doesn't try to CREATE TYPE again (we created above)
+    questvisibility_enum = postgresql.ENUM('public', 'private', name='questvisibility', create_type=False)
+    queststatus_enum = postgresql.ENUM('draft', 'active', 'completed', 'archived', name='queststatus', create_type=False)
+
     op.create_table(
         'quests',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
@@ -35,11 +44,11 @@ def upgrade() -> None:
         sa.Column('title', sa.String(200), nullable=False),
         sa.Column('description', sa.Text(), nullable=False),
         sa.Column('radius_meters', sa.Integer(), nullable=False, server_default='50'),
-        sa.Column('visibility', sa.Enum('public', 'private', name='questvisibility'), nullable=False, server_default='public'),
+        sa.Column('visibility', questvisibility_enum, nullable=False, server_default='public'),
         sa.Column('photo_count', sa.Integer(), nullable=False, server_default='1'),
         sa.Column('start_date', sa.DateTime(timezone=True), nullable=True),
         sa.Column('end_date', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('status', sa.Enum('draft', 'active', 'completed', 'archived', name='queststatus'), nullable=False, server_default='active'),
+        sa.Column('status', queststatus_enum, nullable=False, server_default='active'),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['creator_id'], ['users.id'], ondelete='CASCADE'),
