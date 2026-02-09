@@ -15,7 +15,7 @@ geoalchemy2==0.14.3
 
 # Image processing
 Pillow==10.1.0
-mediapipe==0.10.7  # MediaPipe will install numpy as a dependency
+mediapipe>=0.10.13  # 0.10.7 has no wheel on Linux; MediaPipe installs numpy
 exifread==3.0.0
 google-genai>=1.0.0
 
