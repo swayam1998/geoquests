@@ -246,11 +246,14 @@ button, a, [role="button"] {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   padding: 0;
+  overflow: visible;
 }
 
+/* InfoWindow content area - proper box with padding so text isn't cramped */
 .gm-style .gm-style-iw-d {
-  overflow: hidden !important;
-  padding: 0 !important;
+  overflow: auto !important;
+  padding: 8px 24px !important;
+  box-sizing: border-box;
 }
 
 /* Reduce space between close button and content */
@@ -263,15 +266,19 @@ button, a, [role="button"] {
   right: 8px;
 }
 
+/* Header/title row - pad the title and center it */
 .gm-style .gm-style-iw-t {
   margin-top: 0;
+  padding: 12px 32px 8px 32px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-/* Quest InfoWindow Styles - responsive width for narrow phones */
+/* Quest InfoWindow Styles - responsive width for narrow phones; padding from parent .gm-style-iw-d */
 .quest-info-window {
   width: min(280px, calc(100vw - 32px));
   max-width: 280px;
-  padding: 8px 16px 16px 16px;
+  padding: 4px 0 12px 0;
   font-family: var(--font-inter), system-ui, sans-serif;
 }
 
@@ -288,13 +295,10 @@ button, a, [role="button"] {
   right: 8px;
 }
 
-/* Adjust InfoWindow content area to align with close button */
-.gm-style .gm-style-iw-d {
-  padding-top: 0 !important;
-}
+/* Keep consistent padding; close button is positioned separately */
 
 .quest-info-window-hover {
-  padding: 12px 14px;
+  padding: 4px 0 12px 0;
   font-family: var(--font-inter), system-ui, sans-serif;
   min-width: 200px;
 }

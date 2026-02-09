@@ -170,7 +170,21 @@ export function SubmissionResult({
           <XCircle className="w-10 h-10 text-red-600" weight="regular" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Submission Failed</h2>
-        <p className="text-gray-600">{rejectionReason || message || "Your photo could not be verified."}</p>
+        <p className="text-gray-600">
+          {(() => {
+            const text = rejectionReason || message || "Your photo could not be verified.";
+            const hintPrefix = " Hint: ";
+            const idx = text.indexOf(hintPrefix);
+            if (idx === -1) return text;
+            return (
+              <>
+                {text.slice(0, idx)}
+                <br />
+                <span className="font-bold">{text.slice(idx)}</span>
+              </>
+            );
+          })()}
+        </p>
       </div>
 
       {verificationResult && (
