@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
 """Script to inspect database tables and schema."""
+import os
 import sys
-from sqlalchemy import inspect, text
-from app.database import engine, Base
+from sqlalchemy import create_engine, inspect, text
+
+# Prefer DATABASE_URL from environment so "DATABASE_URL=... python inspect_db.py" works.
+# Read and create engine BEFORE importing app.database, so the app never uses a local default.
+_env_url = (os.environ.get("DATABASE_URL") or "").strip()
+if _env_url:
+    if _env_url.startswith("postgres://"):
+        _env_url = _env_url.replace("postgres://", "postgresql://", 1)
+    os.environ["DATABASE_URL"] = _env_url
+    engine = create_engine(_env_url, pool_pre_ping=True)
+    _engine_from_env = True
+else:
+    engine = None
+    _engine_from_env = False
+
+from app.database import Base
+if engine is None:
+    from app.database import engine
 from app.config import settings
 
 # Import models so they register with Base.metadata
@@ -22,8 +39,10 @@ def show_tables():
     if 'alembic_version' in all_tables:
         tables.insert(0, 'alembic_version')
     
+    _display_url = _env_url if _env_url else settings.DATABASE_URL
+    _db_label = _display_url.split("@")[-1] if _display_url and "@" in _display_url else (_display_url or "(default)")
     print(f"\n{'='*60}")
-    print(f"Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
+    print(f"Database: {_db_label}")
     print(f"{'='*60}\n")
     
     if not tables:

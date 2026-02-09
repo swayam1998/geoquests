@@ -1,16 +1,28 @@
 """Application configuration settings."""
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
-    
+
     # Server (Railway sets PORT)
     PORT: int = 8000
-    
+
     # Database
     DATABASE_URL: str = "postgresql://geoquests:geoquests_dev@localhost:5432/geoquests"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        """Strip whitespace and normalize postgres:// to postgresql:// (e.g. Railway)."""
+        if not v:
+            return v
+        v = v.strip()
+        if v.startswith("postgres://"):
+            v = v.replace("postgres://", "postgresql://", 1)
+        return v
     
     # JWT
     SECRET_KEY: str = "dev-secret-key-change-in-production-min-32-chars"

@@ -17,11 +17,8 @@ from app.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set database URL from settings (SQLAlchemy 2.x needs postgresql:// not postgres://)
-_db_url = settings.DATABASE_URL
-if _db_url.startswith("postgres://"):
-    _db_url = "postgresql://" + _db_url[10:]
-config.set_main_option("sqlalchemy.url", _db_url)
+# URL is normalized in config (strip + postgres:// -> postgresql://)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
