@@ -359,7 +359,7 @@ export default function HomePage() {
             explore the world
           </h1>
           <p 
-            className="mt-6 sm:mt-10 text-base sm:text-xl md:text-2xl lg:text-4xl text-hero-text text-center font-medium px-4"
+            className="mt-6 sm:mt-10 text-xl sm:text-2xl md:text-4xl lg:text-5xl text-hero-text text-center font-medium px-4"
           >
             One Quest at a time
           </p>

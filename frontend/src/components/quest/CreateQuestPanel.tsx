@@ -8,11 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { WarningCircle, Warning, X, Calendar as CalendarIcon, Question, Info } from "@phosphor-icons/react";
+import { WarningCircleIcon, WarningIcon, XIcon, CalendarIcon, InfoIcon } from "@phosphor-icons/react";
 import { checkLocationSafety, type LocationSafety } from "@/lib/location-validation";
 import { questAPI } from "@/lib/api";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -43,7 +48,7 @@ export function CreateQuestPanel({
   const [isPrivate, setIsPrivate] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
   const [isPaid, setIsPaid] = useState(false); // Default to open quests
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined); // Only for paid quests
+  const [startDate, setStartDate] = useState<Date | undefined>(() => new Date()); // Default to today
   const [endDate, setEndDate] = useState<Date | undefined>(undefined); // Only for paid quests
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +93,7 @@ export function CreateQuestPanel({
             if (formData.isPaid && formData.startDate) {
               setStartDate(new Date(formData.startDate));
             } else {
-              setStartDate(undefined);
+              setStartDate(new Date());
             }
             
             if (formData.endDate) {
@@ -143,7 +148,7 @@ export function CreateQuestPanel({
         setIsPrivate(false);
         setPhotoCount(1);
         setIsPaid(false);
-        setStartDate(undefined);
+        setStartDate(new Date());
         setEndDate(undefined);
         setError(null);
         setLocationSafety({ safe: true });
@@ -258,7 +263,7 @@ export function CreateQuestPanel({
       setIsPrivate(false);
       setPhotoCount(1);
       setIsPaid(false);
-      setStartDate(undefined);
+      setStartDate(new Date());
       setEndDate(undefined);
       
       // Pass the created quest ID to the callback
@@ -290,13 +295,13 @@ export function CreateQuestPanel({
       <div className="absolute left-0 top-0 bottom-0 w-full sm:w-96 bg-card shadow-2xl z-50 flex flex-col overflow-hidden sm:border-r border-border">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-brand text-white">
-        <h2 className="text-xl sm:text-2xl font-bold text-white">Create Quest</h2>
+        <h2 className="text-xl sm:text-2xl font-bold" style={{ color: "white" }}>Create Quest</h2>
         <button
           onClick={onClose}
           className="size-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors shrink-0"
           aria-label="Close"
         >
-          <X className="w-5 h-5" weight="regular" />
+          <XIcon className="w-5 h-5" weight="regular" />
         </button>
       </div>
 
@@ -307,7 +312,7 @@ export function CreateQuestPanel({
           {!locationSafety.safe && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <WarningCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" weight="regular" />
+                <WarningCircleIcon className="w-5 h-5 text-red-600 mt-0.5 shrink-0" weight="regular" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-red-800">
                     Private Location Detected
@@ -326,7 +331,7 @@ export function CreateQuestPanel({
           {locationSafety.safe && locationSafety.reason && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <Warning className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" weight="regular" />
+                <WarningIcon className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" weight="regular" />
                 <p className="text-sm text-yellow-800">{locationSafety.reason}</p>
               </div>
             </div>
@@ -412,10 +417,10 @@ export function CreateQuestPanel({
             </div>
           </div>
 
-          {/* Visibility */}
+          {/* Visibility - shadcn Switch with description (radix/switch pattern) */}
           <div className="space-y-3">
             <div className="space-y-0.5">
-              <Label id="visibility-label">Visibility</Label>
+              <Label id="visibility-label" htmlFor="visibility">Visibility</Label>
               <p className="text-sm text-muted-foreground">
                 {isPrivate
                   ? "Only people with the link can view this quest"
@@ -442,49 +447,47 @@ export function CreateQuestPanel({
             </div>
           </div>
 
-          {/* Quest Type */}
+          {/* Quest Type - shadcn Switch (Open vs Paid; Paid disabled for now) */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label>Quest Type</Label>
-              <div className="relative group">
-                <button
-                  type="button"
-                  className="p-0.5 rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label="Quest type information"
-                >
-                  <Question className="w-4 h-4 text-gray-400" weight="regular" />
-                </button>
-                {/* Tooltip */}
-                <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+              <Label id="quest-type-label" htmlFor="quest-type" className="leading-none">Quest Type</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                    aria-label="Quest type information"
+                  >
+                    <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" className="max-w-64">
                   <p>Paid quests are disabled for now. Please use Open Quest to create your quest. Paid quests will allow you to set start and end dates (coming soon).</p>
-                  {/* Tooltip arrow */}
-                  <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
-                </div>
-              </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={!isPaid ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => setIsPaid(false)}
-                disabled={isSubmitting}
-              >
-                Open Quest
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 opacity-60 cursor-not-allowed"
-                disabled={true}
-                title="Paid quests are disabled for now"
-              >
-                Paid Quest
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Open quests are available immediately and have no time restrictions.
             </p>
+            <div
+              className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
+              role="group"
+              aria-labelledby="quest-type-label"
+            >
+              <span className={`text-sm font-medium ${!isPaid ? "text-foreground" : "text-muted-foreground"}`}>
+                Open Quest
+              </span>
+              <Switch
+                id="quest-type"
+                checked={isPaid}
+                onCheckedChange={setIsPaid}
+                disabled
+                aria-label="Toggle between open and paid quest (paid disabled for now)"
+              />
+              <span className={`text-sm font-medium ${isPaid ? "text-foreground" : "text-muted-foreground"} opacity-60`}>
+                Paid Quest
+              </span>
+            </div>
           </div>
 
           {/* Photo Count */}
@@ -558,18 +561,21 @@ export function CreateQuestPanel({
           {/* End Date - Disabled for non-paid quests */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">End Date (Optional)</Label>
-              <div className="relative group">
-                <Info
-                  className="w-4 h-4 text-muted-foreground shrink-0"
-                  weight="regular"
-                  aria-label="Why is end date disabled?"
-                />
-                <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+              <Label className="text-muted-foreground leading-none">End Date (Optional)</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                    aria-label="Why is end date disabled?"
+                  >
+                    <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" className="max-w-64">
                   <p>End date is available for paid quests (coming soon). For open quests, quests have no expiration.</p>
-                  <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
-                </div>
-              </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 opacity-75 pointer-events-none">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
