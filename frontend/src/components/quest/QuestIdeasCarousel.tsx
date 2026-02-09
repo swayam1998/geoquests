@@ -2,6 +2,7 @@
 
 import { QuestIdea } from "@/types";
 import { Compass, ArrowRight } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 
 interface QuestIdeasCarouselProps {
   ideas: QuestIdea[];
@@ -46,16 +47,17 @@ export function QuestIdeasCarousel({ ideas, onIdeaClick }: QuestIdeasCarouselPro
               </p>
 
               {/* Create Quest button */}
-              <button
+              <Button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onIdeaClick?.(idea);
                 }}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand text-brand-foreground text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors w-full group/btn"
+                className="w-full gap-1.5 group/btn"
               >
                 Create Quest
                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" weight="bold" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>

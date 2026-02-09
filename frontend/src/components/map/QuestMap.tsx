@@ -22,6 +22,7 @@ interface QuestMapProps {
   allowQuestCreation?: boolean; // Allow clicking on map to create quests
   hideViewQuestButton?: boolean; // Hide "View Quest" button (e.g., when already on quest detail page)
   prefillData?: { title: string; description: string } | null; // Prefill data for create quest panel
+  userLocation?: { lat: number; lng: number; accuracy?: number } | null; // Show "you are here" marker and use for default view
 }
 
 // Map container styles
@@ -61,6 +62,16 @@ function getClickedLocationMarkerDataUrl(): string {
   return getMapPinMarkerDataUrl("#3B82F6", 70); // Blue color to differentiate from existing quests
 }
 
+// Blue dot for "you are here" (matches common map UX)
+function getUserLocationMarkerDataUrl(): string {
+  const size = 44;
+  const svgString = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">
+    <circle cx="22" cy="22" r="18" fill="#4285F4" stroke="#fff" stroke-width="4"/>
+    <circle cx="22" cy="22" r="8" fill="#fff"/>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+}
+
 export function QuestMap({
   quests,
   onQuestClick,
@@ -73,6 +84,7 @@ export function QuestMap({
   allowQuestCreation = true,
   hideViewQuestButton = false,
   prefillData = null,
+  userLocation = null,
 }: QuestMapProps) {
   // Convert center from [lat, lng] array to { lat, lng } object for Google Maps
   const centerObj = center ? { lat: center[0], lng: center[1] } : { lat: 40.7128, lng: -74.006 };
@@ -372,13 +384,13 @@ export function QuestMap({
       map: mapRef.current,
     });
 
-    // Create black circle (on top)
+    // Create radius circle in brand color (on top)
     const circle = new google.maps.Circle({
       center: clickedLocation,
       radius: questRadius,
-      fillColor: "#000000",
+      fillColor: "#F44D11",
       fillOpacity: 0.15,
-      strokeColor: "#000000",
+      strokeColor: "#F44D11",
       strokeOpacity: 1,
       strokeWeight: 5,
       clickable: false,
@@ -821,7 +833,7 @@ export function QuestMap({
                     onClick={() => handleShareQuest(selectedQuest)}
                     disabled={isSharing === selectedQuest.id}
                     variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 rounded-lg transition-all duration-200"
+                    className="w-full"
                   >
                     {isSharing === selectedQuest.id ? (
                       "Getting link..."
@@ -845,7 +857,7 @@ export function QuestMap({
                     onClick={() => handleViewQuest(selectedQuest)}
                     disabled={isLoadingQuestSlug === selectedQuest.id}
                     variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 rounded-lg transition-all duration-200"
+                    className="w-full"
                   >
                     {isLoadingQuestSlug === selectedQuest.id ? (
                       "Loading..."
@@ -863,7 +875,7 @@ export function QuestMap({
                   <Button
                     onClick={() => handleJoinQuest(selectedQuest)}
                     disabled={isJoining === selectedQuest.id || joinedQuests.has(selectedQuest.id)}
-                    className="w-full bg-action-blue hover:bg-action-blue-hover text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
+                    className="w-full disabled:opacity-50"
                   >
                     {isJoining === selectedQuest.id ? (
                       "Joining..."
@@ -880,9 +892,9 @@ export function QuestMap({
                 {!isAuthenticated && (
                   <Button
                     onClick={() => router.push("/login")}
-                    className="w-full bg-action-blue hover:bg-action-blue-hover text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full"
                   >
-                    Sign in to Join
+                    Sign in to Join Quest
                   </Button>
                 )}
               </div>
@@ -982,7 +994,7 @@ export function QuestMap({
                     onClick={() => handleShareQuest(hoveredQuest)}
                     disabled={isSharing === hoveredQuest.id}
                     variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 rounded-lg transition-all duration-200"
+                    className="w-full"
                   >
                     {isSharing === hoveredQuest.id ? (
                       "Getting link..."
@@ -1006,7 +1018,7 @@ export function QuestMap({
                     onClick={() => handleViewQuest(hoveredQuest)}
                     disabled={isLoadingQuestSlug === hoveredQuest.id}
                     variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 rounded-lg transition-all duration-200"
+                    className="w-full"
                   >
                     {isLoadingQuestSlug === hoveredQuest.id ? (
                       "Loading..."
@@ -1024,7 +1036,7 @@ export function QuestMap({
                   <Button
                     onClick={() => handleJoinQuest(hoveredQuest)}
                     disabled={isJoining === hoveredQuest.id || joinedQuests.has(hoveredQuest.id)}
-                    className="w-full bg-action-blue hover:bg-action-blue-hover text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
+                    className="w-full disabled:opacity-50"
                   >
                     {isJoining === hoveredQuest.id ? (
                       "Joining..."
@@ -1041,14 +1053,29 @@ export function QuestMap({
                 {!isAuthenticated && (
                   <Button
                     onClick={() => router.push("/login")}
-                    className="w-full bg-action-blue hover:bg-action-blue-hover text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full"
                   >
-                    Sign in to Join
+                    Sign in to Join Quest
                   </Button>
                 )}
               </div>
             </div>
           </InfoWindow>
+        )}
+
+        {/* User location marker - "you are here" */}
+        {userLocation && (
+          <Marker
+            key="user-location"
+            position={{ lat: userLocation.lat, lng: userLocation.lng }}
+            icon={{
+              url: getUserLocationMarkerDataUrl(),
+              scaledSize: new google.maps.Size(44, 44),
+              anchor: new google.maps.Point(22, 22),
+            }}
+            zIndex={500}
+            title="You are here"
+          />
         )}
 
         {/* Red pin marker for clicked location - only show when quest creation is allowed */}
@@ -1136,9 +1163,10 @@ export function QuestMap({
       <div className="absolute bottom-14 right-4 sm:bottom-4 sm:right-[70px] z-50">
         <div className="relative">
           {/* Main Button */}
-          <button
+          <Button
+            variant="outline"
             onClick={() => setIsMapTypeMenuOpen(!isMapTypeMenuOpen)}
-            className="bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-2.5 text-sm font-medium flex items-center gap-2 min-w-[120px] hover:bg-gray-50 transition-colors"
+            className="bg-white shadow-lg border-gray-200 px-4 py-2.5 flex items-center gap-2 min-w-[120px] hover:bg-gray-50"
             title="Map Type"
           >
             <span className="text-base">
@@ -1158,7 +1186,7 @@ export function QuestMap({
                 d="M19 9l-7 7-7-7"
               />
             </svg>
-          </button>
+          </Button>
 
           {/* Collapsible Menu */}
           {isMapTypeMenuOpen && (

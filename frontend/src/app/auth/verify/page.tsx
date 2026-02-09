@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { useAuthContext } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 function VerifyMagicLinkContent() {
   const router = useRouter();
@@ -99,12 +100,9 @@ function VerifyMagicLinkContent() {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Verification failed</h2>
             <p className="text-gray-600 mb-4">{error || 'The magic link is invalid or has expired'}</p>
-            <Link
-              href="/login"
-              className="inline-block bg-primary text-primary-foreground px-6 py-2 rounded-lg font-semibold hover:bg-primary/80 transition-colors"
-            >
-              Try again
-            </Link>
+            <Button asChild>
+              <Link href="/login">Try again</Link>
+            </Button>
           </>
         )}
       </div>

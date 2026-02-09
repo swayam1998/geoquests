@@ -314,12 +314,9 @@ export default function QuestSharePage() {
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error || "Quest not found"}</p>
-            <button
-              onClick={() => router.push("/")}
-              className="px-4 py-2 bg-action-blue text-white rounded-lg hover:bg-action-blue-hover"
-            >
+            <Button onClick={() => router.push("/")}>
               Go Home
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -427,7 +424,8 @@ export default function QuestSharePage() {
               // User has joined - scroll to submit section below the map
               <Button
                 onClick={handleScrollToSubmit}
-                className="flex-1 sm:flex-initial sm:min-w-[200px] bg-brand hover:bg-brand-hover text-brand-foreground font-medium py-3 rounded-lg"
+                size="lg"
+                className="flex-1 sm:flex-initial sm:min-w-[200px]"
               >
                 <Camera className="w-5 h-5 mr-2" weight="regular" />
                 Submit Quest
@@ -437,7 +435,7 @@ export default function QuestSharePage() {
               <Button
                 onClick={handleJoinQuest}
                 disabled={isJoining || !isAuthenticated}
-                className="flex-1 sm:flex-initial sm:min-w-[200px] bg-action-blue hover:bg-action-blue-hover text-white font-medium py-3 rounded-lg disabled:opacity-50"
+                className="flex-1 sm:flex-initial sm:min-w-[200px] disabled:opacity-50"
               >
                 {isJoining ? "Joining..." : "Join Quest"}
               </Button>
@@ -445,9 +443,9 @@ export default function QuestSharePage() {
             {!isAuthenticated && (
               <Button
                 onClick={() => router.push("/login")}
-                className="flex-1 sm:flex-initial sm:min-w-[200px] bg-action-blue hover:bg-action-blue-hover text-white font-medium py-3 rounded-lg"
+                className="flex-1 sm:flex-initial sm:min-w-[200px]"
               >
-                Sign in to Join
+                Sign in to Join Quest
               </Button>
             )}
           </div>

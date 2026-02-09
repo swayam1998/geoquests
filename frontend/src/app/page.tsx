@@ -2,13 +2,16 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { Button } from "@/components/ui/button";
 import { QuestMap } from "@/components/map/QuestMap";
 import { QuestIdeasCarousel } from "@/components/quest/QuestIdeasCarousel";
 import { QuestsTable } from "@/components/quest/QuestsTable";
 import { getShuffledIdeas } from "@/lib/quest-ideas";
 import { Quest, QuestIdea } from "@/types";
 import { questAPI } from "@/lib/api";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 // Helper function to convert API quest to frontend Quest type
 const convertApiQuestToQuest = (apiQuest: {
@@ -67,19 +70,26 @@ const convertApiQuestToQuest = (apiQuest: {
   };
 };
 
+// Default map center when user location is not yet available
+const DEFAULT_MAP_CENTER: [number, number] = [40.74, -73.99];
+
 // Memoized Map component to prevent re-renders
 const MemoizedMap = ({ 
   quests, 
   onQuestClick, 
   onQuestCreated,
   selectedQuestId,
-  prefillData
+  prefillData,
+  center,
+  userLocation,
 }: { 
   quests: Quest[], 
   onQuestClick: (quest: Quest) => void,
   onQuestCreated: (questId: string) => void,
   selectedQuestId: string | null,
-  prefillData: { title: string; description: string } | null
+  prefillData: { title: string; description: string } | null,
+  center: [number, number],
+  userLocation: { lat: number; lng: number; accuracy?: number } | null,
 }) => {
   return useMemo(() => (
     <QuestMap
@@ -88,12 +98,13 @@ const MemoizedMap = ({
       onQuestCreated={onQuestCreated}
       selectedQuestId={selectedQuestId}
       prefillData={prefillData}
-      center={[40.74, -73.99]}
+      center={center}
+      userLocation={userLocation}
       zoom={12}
       className="w-full h-full"
       showSearch={true}
     />
-  ), [quests, onQuestClick, onQuestCreated, selectedQuestId, prefillData]);
+  ), [quests, onQuestClick, onQuestCreated, selectedQuestId, prefillData, center, userLocation]);
 };
 
 export default function HomePage() {
@@ -109,6 +120,16 @@ export default function HomePage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const creamSectionRef = useRef<HTMLElement>(null);
   const creamInnerRef = useRef<HTMLDivElement>(null);
+
+  const { location: userLocation } = useUserLocation();
+  // Center map on user's location once when we first get it; otherwise use default
+  const [initialMapCenter, setInitialMapCenter] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    if (userLocation && initialMapCenter === null) {
+      setInitialMapCenter([userLocation.lat, userLocation.lng]);
+    }
+  }, [userLocation, initialMapCenter]);
+  const mapCenter = initialMapCenter ?? DEFAULT_MAP_CENTER;
 
   // Fetch quests from API
   const fetchQuests = useCallback(async () => {
@@ -340,7 +361,7 @@ export default function HomePage() {
           <p 
             className="mt-6 sm:mt-10 text-base sm:text-xl md:text-2xl lg:text-4xl text-hero-text text-center font-medium px-4"
           >
-            One quest at a time
+            One Quest at a time
           </p>
         </div>
       </section>
@@ -362,16 +383,16 @@ export default function HomePage() {
               shared experiences wherever they are to help you make 
               meaningful connections one quest at a time.
             </p>
-            <button 
-              className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-card rounded-full text-foreground font-medium text-sm hover:bg-surface-hover transition-all duration-200 shadow-sm border border-border w-fit hover:shadow-md"
-            >
-              Start exploring
-              <span className="w-5 h-5 rounded-full bg-brand flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </button>
+            <Button asChild className="mt-5 w-fit gap-2">
+              <Link href="/#map">
+                Start exploring
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Link>
+            </Button>
           </div>
 
           {/* Carousel */}
@@ -397,6 +418,8 @@ export default function HomePage() {
                   onQuestCreated={handleQuestCreated}
                   selectedQuestId={selectedQuestId}
                   prefillData={pendingIdea ? { title: pendingIdea.title, description: pendingIdea.description } : null}
+                  center={mapCenter}
+                  userLocation={userLocation}
                 />
               )}
             </div>

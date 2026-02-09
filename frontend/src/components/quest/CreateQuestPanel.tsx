@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { WarningCircle, Warning, X, Calendar as CalendarIcon, Question } from "@phosphor-icons/react";
+import { WarningCircle, Warning, X, Calendar as CalendarIcon, Question, Info } from "@phosphor-icons/react";
 import { checkLocationSafety, type LocationSafety } from "@/lib/location-validation";
 import { questAPI } from "@/lib/api";
 import { Calendar } from "@/components/ui/calendar";
@@ -289,11 +289,11 @@ export function CreateQuestPanel({
       {/* Panel */}
       <div className="absolute left-0 top-0 bottom-0 w-full sm:w-96 bg-card shadow-2xl z-50 flex flex-col overflow-hidden sm:border-r border-border">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-brand text-brand-foreground">
-        <h2 className="text-lg font-semibold">Create Quest</h2>
+      <div className="flex items-center justify-between p-4 border-b bg-brand text-white">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Create Quest</h2>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded-md transition-colors"
+          className="size-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors shrink-0"
           aria-label="Close"
         >
           <X className="w-5 h-5" weight="regular" />
@@ -404,6 +404,7 @@ export function CreateQuestPanel({
               min={10}
               max={100}
               step={10}
+              className="[&_[data-slot=slider-range]]:bg-brand [&_[data-slot=slider-thumb]]:border-brand"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>10m</span>
@@ -412,25 +413,30 @@ export function CreateQuestPanel({
           </div>
 
           {/* Visibility */}
-          <div className="flex items-center justify-between">
+          <div className="space-y-3">
             <div className="space-y-0.5">
-              <Label htmlFor="visibility">Visibility</Label>
+              <Label id="visibility-label">Visibility</Label>
               <p className="text-sm text-muted-foreground">
                 {isPrivate
                   ? "Only people with the link can view this quest"
                   : "Anyone can discover and complete this quest"}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-sm ${!isPrivate ? "font-medium" : "text-muted-foreground"}`}>
+            <div
+              className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
+              role="group"
+              aria-labelledby="visibility-label"
+            >
+              <span className={`text-sm font-medium ${!isPrivate ? "text-foreground" : "text-muted-foreground"}`}>
                 Public
               </span>
               <Switch
                 id="visibility"
                 checked={isPrivate}
                 onCheckedChange={setIsPrivate}
+                aria-label="Toggle between public and private visibility"
               />
-              <span className={`text-sm ${isPrivate ? "font-medium" : "text-muted-foreground"}`}>
+              <span className={`text-sm font-medium ${isPrivate ? "text-foreground" : "text-muted-foreground"}`}>
                 Private
               </span>
             </div>
@@ -521,71 +527,60 @@ export function CreateQuestPanel({
             </p>
           </div>
 
-          {/* Start Date - Only for Paid Quests */}
-          {isPaid && (
-            <>
-              <div className="space-y-2">
-                <Label>Start Date <span className="text-red-500">*</span></Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={isSubmitting}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" weight="regular" />
-                      {startDate ? format(startDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-muted-foreground">
-                  When should this quest become active?
-                </p>
-              </div>
+          {/* Start Date - Shown for all quests (used when quest type supports it) */}
+          <div className="space-y-2">
+            <Label>Start Date {isPaid && <span className="text-red-500">*</span>}</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  disabled={isSubmitting}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" weight="regular" />
+                  {startDate ? format(startDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              When should this quest become active? Open quests start immediately if not set.
+            </p>
+          </div>
 
-              {/* End Date - Only for Paid Quests */}
-              <div className="space-y-2">
-                <Label>End Date (Optional)</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={isSubmitting}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" weight="regular" />
-                      {endDate ? format(endDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => startDate ? date < startDate : false}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-muted-foreground">
-                  When should this quest expire? Leave empty for no expiration.
-                </p>
-                {endDate && startDate && endDate < startDate && (
-                  <p className="text-xs text-red-600">
-                    End date must be after start date.
-                  </p>
-                )}
+          {/* End Date - Disabled for non-paid quests */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-muted-foreground">End Date (Optional)</Label>
+              <div className="relative group">
+                <Info
+                  className="w-4 h-4 text-muted-foreground shrink-0"
+                  weight="regular"
+                  aria-label="Why is end date disabled?"
+                />
+                <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                  <p>End date is available for paid quests (coming soon). For open quests, quests have no expiration.</p>
+                  <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
+                </div>
               </div>
-            </>
-          )}
+            </div>
+            <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 opacity-75 pointer-events-none">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CalendarIcon className="w-4 h-4" weight="regular" />
+                <span>Not available for open quests</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When should this quest expire? Available with paid quests (coming soon).
+            </p>
+          </div>
 
           {/* Submit Button */}
           <div className="pt-4 border-t">

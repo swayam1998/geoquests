@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { GlobeHemisphereWestIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
@@ -56,7 +57,7 @@ export function Header() {
       <div className="mt-4 header-safe-top mx-4 header-safe-x animate-header-slide-down pointer-events-auto">
         {/* Apple-style frosted glass container */}
         <div 
-          className="relative rounded-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] px-3 sm:px-6 py-2 sm:py-3 bg-card/75 backdrop-blur-xl border border-card/60"
+          className="relative rounded-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] px-3 sm:px-6 py-2 sm:py-3 bg-card/75 backdrop-blur-xl  "
           style={{
             boxShadow: isScrolled 
               ? `
@@ -76,19 +77,25 @@ export function Header() {
               `,
           }}
         >
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            {/* 1. Logo */}
+          <div className="flex items-center justify-center">
+            {/* 1. Logo - very large margin for clear separation before Create Quest */}
             <Link 
               href="/" 
-              className="flex items-center gap-1.5 sm:gap-2.5 group"
+              className="flex items-center gap-1.5 sm:gap-2.5 group mr-16 sm:mr-24 md:mr-32"
             >
-              <span className="text-xl sm:text-2xl transition-transform duration-300 group-hover:scale-110">📍</span>
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground whitespace-nowrap tracking-tight">
+              <GlobeHemisphereWestIcon size={40} weight="fill" className="text-brand transition-transform duration-300 group-hover:scale-110 shrink-0" />
+              <span className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground whitespace-nowrap tracking-tight">
                 GeoQuests
               </span>
             </Link>
 
-            {/* 2. Sign in or User menu */}
+            {/* 2. Create Quest + Profile/Sign in - tight gap between these two */}
+            <div className="flex items-center gap-1">
+            <Button asChild size="lg" className="whitespace-nowrap px-3 sm:px-6 text-sm sm:text-base">
+              <Link href="/#map">Create Quest</Link>
+            </Button>
+
+            {/* 3. Sign in or User menu - to the right of Create Quest */}
             {isAuthenticated ? (
                 <div className="relative" ref={userMenuRef}>
                   <Button
@@ -176,19 +183,12 @@ export function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 whitespace-nowrap px-2 sm:px-4 h-9 text-xs sm:text-sm"
+                  className="inline-flex items-center justify-center font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 whitespace-nowrap px-2 sm:px-4 h-10 text-sm sm:text-base"
                 >
                   Sign in
                 </Link>
               )}
-
-            {/* 3. Create Quest Button - same brand style as other primary buttons */}
-            <Button
-              asChild
-              className="rounded-full bg-brand text-brand-foreground hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all duration-300 whitespace-nowrap px-3 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm"
-            >
-              <Link href="/#map">Create Quest</Link>
-            </Button>
+            </div>
           </div>
         </div>
       </div>

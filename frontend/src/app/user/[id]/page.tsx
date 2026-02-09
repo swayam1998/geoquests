@@ -133,12 +133,9 @@ export default function UserProfilePage() {
         <div className="flex items-center justify-center min-h-[calc(100vh-80px)] pt-24">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error || "User not found"}</p>
-            <button
-              onClick={() => router.push("/")}
-              className="px-4 py-2 bg-action-blue text-white rounded-lg hover:bg-action-blue-hover"
-            >
+            <Button onClick={() => router.push("/")}>
               Go Home
-            </button>
+            </Button>
           </div>
         </div>
       </div>

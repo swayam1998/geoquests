@@ -228,25 +228,30 @@ export function CreateQuestModal({
           </div>
 
           {/* Visibility */}
-          <div className="flex items-center justify-between">
+          <div className="space-y-3">
             <div className="space-y-0.5">
-              <Label htmlFor="visibility">Visibility</Label>
+              <Label id="visibility-label">Visibility</Label>
               <p className="text-sm text-muted-foreground">
                 {isPrivate
                   ? "Only people with the link can view this quest"
                   : "Anyone can discover and complete this quest"}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-sm ${!isPrivate ? "font-medium" : "text-muted-foreground"}`}>
+            <div
+              className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
+              role="group"
+              aria-labelledby="visibility-label"
+            >
+              <span className={`text-sm font-medium ${!isPrivate ? "text-foreground" : "text-muted-foreground"}`}>
                 Public
               </span>
               <Switch
                 id="visibility"
                 checked={isPrivate}
                 onCheckedChange={setIsPrivate}
+                aria-label="Toggle between public and private visibility"
               />
-              <span className={`text-sm ${isPrivate ? "font-medium" : "text-muted-foreground"}`}>
+              <span className={`text-sm font-medium ${isPrivate ? "text-foreground" : "text-muted-foreground"}`}>
                 Private
               </span>
             </div>

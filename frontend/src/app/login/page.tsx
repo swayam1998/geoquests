@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
 import { useAuthContext } from '@/contexts/AuthContext';
 
@@ -82,9 +83,11 @@ function LoginContent() {
           <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Sign in to continue exploring</p>
 
           {/* Google OAuth Button */}
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 py-3 sm:py-3.5 bg-white border-2 border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 font-medium text-sm sm:text-base text-gray-700 mb-4 touch-manipulation"
+            className="w-full gap-2 sm:gap-3 py-3 sm:py-3.5 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 mb-4 touch-manipulation text-sm sm:text-base"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -105,7 +108,7 @@ function LoginContent() {
               />
             </svg>
             Continue with Google
-          </button>
+          </Button>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
@@ -133,13 +136,14 @@ function LoginContent() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-primary text-primary-foreground py-3 sm:py-3.5 rounded-lg font-semibold hover:bg-primary/80 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
+              size="lg"
+              className="w-full py-3 sm:py-3.5 touch-manipulation text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Sending...' : 'Send magic link'}
-            </button>
+            </Button>
           </form>
 
           {/* Message */}
