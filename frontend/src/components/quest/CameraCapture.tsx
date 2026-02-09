@@ -15,6 +15,7 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const capturedBlobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     if (!disabled && !capturedImage) {
@@ -70,11 +71,11 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
     // Draw video frame to canvas
     context.drawImage(video, 0, 0);
 
-    // Convert to blob
+    // Convert to blob and keep for "Use This Photo"
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          // Create preview URL
+          capturedBlobRef.current = blob;
           const imageUrl = URL.createObjectURL(blob);
           setCapturedImage(imageUrl);
           stopCamera();
@@ -90,21 +91,15 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
       URL.revokeObjectURL(capturedImage);
       setCapturedImage(null);
     }
+    capturedBlobRef.current = null;
     startCamera();
   };
 
   const confirmPhoto = () => {
-    if (!canvasRef.current || !capturedImage) return;
-
-    canvasRef.current.toBlob(
-      (blob) => {
-        if (blob) {
-          onCapture(blob);
-        }
-      },
-      "image/jpeg",
-      0.9
-    );
+    const blob = capturedBlobRef.current;
+    if (blob) {
+      onCapture(blob);
+    }
   };
 
   if (error) {

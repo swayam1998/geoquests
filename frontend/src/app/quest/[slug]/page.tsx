@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { questAPI } from "@/lib/api";
+import { questAPI, submissionAPI } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
 import { QuestMap } from "@/components/map/QuestMap";
+import { GPSStatus } from "@/components/quest/GPSStatus";
+import { PhotoInput, type CaptureMethod } from "@/components/quest/PhotoInput";
+import { SubmissionResult } from "@/components/quest/SubmissionResult";
 import { Quest } from "@/types";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { haversineDistance, formatDistance } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
-import { Check, MapPin, Users, Calendar, Camera } from "@phosphor-icons/react";
+import { Check, MapPin, Users, Calendar, Camera, NavigationArrow, CircleNotch } from "@phosphor-icons/react";
 
 interface QuestDetail {
   id: string;
@@ -34,6 +39,13 @@ interface QuestDetail {
   updated_at?: string;
 }
 
+interface ApprovedSubmission {
+  id: string;
+  image_url: string;
+  submitted_at: string;
+  explorer_id: string;
+}
+
 export default function QuestSharePage() {
   const params = useParams();
   const router = useRouter();
@@ -45,10 +57,73 @@ export default function QuestSharePage() {
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [approvedSubmissions, setApprovedSubmissions] = useState<ApprovedSubmission[]>([]);
+  const [approvedSubmissionsLoading, setApprovedSubmissionsLoading] = useState(false);
+  const [approvedSubmissionsError, setApprovedSubmissionsError] = useState<string | null>(null);
+  const { location: userLocation, isLoading: isLocationLoading } = useUserLocation();
+
+  // Submit section ref for scroll-into-view
+  const submitSectionRef = useRef<HTMLDivElement>(null);
+
+  // Submission flow state (for joined users, below the map)
+  const [gpsReady, setGpsReady] = useState(false);
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [photo, setPhoto] = useState<Blob | null>(null);
+  const [captureMethod, setCaptureMethod] = useState<CaptureMethod>("live");
+  const [uploadExifLocation, setUploadExifLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<"success" | "failure" | "pending_review" | null>(null);
+  const [submissionData, setSubmissionData] = useState<any>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // Calculate distance from user to quest
+  const distanceToQuest = useMemo(() => {
+    if (!userLocation || !quest) return null;
+    return haversineDistance(
+      userLocation.lat,
+      userLocation.lng,
+      quest.location.lat,
+      quest.location.lng
+    );
+  }, [userLocation, quest]);
 
   useEffect(() => {
     loadQuest();
   }, [slug]);
+
+  // Load approved submissions when viewer is the quest creator
+  const isCreator = isAuthenticated && user && quest !== null && quest.creator_id === user.id;
+  useEffect(() => {
+    if (!isCreator || !quest?.id) return;
+    let cancelled = false;
+    setApprovedSubmissionsLoading(true);
+    setApprovedSubmissionsError(null);
+    submissionAPI
+      .getQuestSubmissions(quest.id, { status: "verified" })
+      .then((list) => {
+        if (!cancelled) {
+          setApprovedSubmissions(
+            list.map((s) => ({
+              id: s.id,
+              image_url: s.image_url,
+              submitted_at: s.submitted_at,
+              explorer_id: s.explorer_id,
+            }))
+          );
+        }
+      })
+      .catch((err: any) => {
+        if (!cancelled) {
+          setApprovedSubmissionsError(err.message || "Failed to load photos");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setApprovedSubmissionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCreator, quest?.id]);
 
   const loadQuest = async () => {
     setIsLoading(true);
@@ -63,6 +138,95 @@ export default function QuestSharePage() {
       setError(err.message || "Failed to load quest");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Scroll to submit section when hash is #submit (e.g. from /quest/[slug]/submit redirect)
+  useEffect(() => {
+    if (!quest || !hasJoined || isCreator) return;
+    if (typeof window !== "undefined" && window.location.hash === "#submit") {
+      submitSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [quest, hasJoined, isCreator]);
+
+  const handleScrollToSubmit = () => {
+    submitSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleLocationReady = (location: { lat: number; lng: number; accuracy: number }) => {
+    setGpsLocation(location);
+    setGpsReady(true);
+  };
+
+  const handlePhotoCapture = (
+    imageBlob: Blob,
+    method: CaptureMethod,
+    exifLocation?: { lat: number; lng: number; accuracy?: number }
+  ) => {
+    setPhoto(imageBlob);
+    setCaptureMethod(method);
+    setUploadExifLocation(method === "upload" && exifLocation ? exifLocation : null);
+  };
+
+  const getLocationForSubmit = (): Promise<{ lat: number; lng: number; accuracy: number }> => {
+    if (gpsLocation) return Promise.resolve(gpsLocation);
+    return new Promise((resolve, reject) => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        reject(new Error("Location is not supported"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy ?? 0,
+          }),
+        () => reject(new Error("Could not get your location. Please enable location access.")),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  };
+
+  const handleSubmitPhoto = async () => {
+    if (!quest || !photo) return;
+    setIsUploading(true);
+    setSubmissionError(null);
+    try {
+      let location: { lat: number; lng: number; accuracy: number };
+      if (captureMethod === "upload" && uploadExifLocation) {
+        location = {
+          lat: uploadExifLocation.lat,
+          lng: uploadExifLocation.lng,
+          accuracy: uploadExifLocation.accuracy ?? 0,
+        };
+      } else {
+        location = await getLocationForSubmit();
+      }
+      const imageFile = photo instanceof File ? photo : new File([photo], "quest-photo.jpg", { type: "image/jpeg" });
+      const response = await submissionAPI.submitQuestPhoto(
+        quest.id,
+        imageFile,
+        { lat: location.lat, lng: location.lng, accuracy: location.accuracy },
+        new Date().toISOString(),
+        captureMethod
+      );
+      setSubmissionData(response);
+      setSubmissionResult(response.status === "pending_review" ? "pending_review" : "success");
+    } catch (err: any) {
+      console.error("Failed to submit:", err);
+      setSubmissionError(err.message || "Failed to submit photo");
+      if (err.data && err.data.verification_result) {
+        setSubmissionData({
+          verification_result: err.data.verification_result,
+          rejection_reason: err.data.message,
+        });
+      } else {
+        setSubmissionData({ rejection_reason: err.message || "Failed to submit photo" });
+      }
+      setSubmissionResult("failure");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -163,7 +327,6 @@ export default function QuestSharePage() {
   }
 
   const questForMap = convertToQuest(quest);
-  const isCreator = isAuthenticated && user && quest.creator_id === user.id;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-page-gradient-from via-page-gradient-via to-page-gradient-to">
@@ -205,6 +368,22 @@ export default function QuestSharePage() {
             <span className="font-mono">{quest.location.lat.toFixed(6)}, {quest.location.lng.toFixed(6)}</span>
           </div>
           
+          {/* Distance from user */}
+          {(distanceToQuest !== null || isLocationLoading) && (
+            <div className="mt-4 sm:mt-5 flex justify-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200">
+                <NavigationArrow className="w-4 h-4 text-blue-600" weight="fill" />
+                {isLocationLoading ? (
+                  <span className="text-sm text-blue-700 font-medium">Getting your location...</span>
+                ) : distanceToQuest !== null ? (
+                  <span className="text-sm text-blue-700 font-medium">
+                    {formatDistance(distanceToQuest)} away from you
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {/* Quest Stats - centered with icons */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border max-w-3xl mx-auto">
             <div className="flex flex-col items-center gap-2">
@@ -245,13 +424,13 @@ export default function QuestSharePage() {
               // Creator view - no action needed since map is below
               null
             ) : hasJoined ? (
-              // User has joined - show Upload Image button
+              // User has joined - scroll to submit section below the map
               <Button
-                onClick={() => router.push(`/quest/${slug}/submit`)}
+                onClick={handleScrollToSubmit}
                 className="flex-1 sm:flex-initial sm:min-w-[200px] bg-brand hover:bg-brand-hover text-brand-foreground font-medium py-3 rounded-lg"
               >
                 <Camera className="w-5 h-5 mr-2" weight="regular" />
-                Upload Image
+                Submit Quest
               </Button>
             ) : (
               // User hasn't joined - show Join Quest button
@@ -274,6 +453,42 @@ export default function QuestSharePage() {
           </div>
         </div>
 
+        {/* Photos from participants (creator only) */}
+        {isCreator && (
+          <div className="bg-card rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-3 sm:mb-4">
+              Photos from participants
+            </h2>
+            {approvedSubmissionsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-action-blue" />
+              </div>
+            ) : approvedSubmissionsError ? (
+              <p className="text-sm text-red-600 py-4">{approvedSubmissionsError}</p>
+            ) : approvedSubmissions.length === 0 ? (
+              <p className="text-sm text-text-secondary py-4">No approved photos yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                {approvedSubmissions.map((sub) => (
+                  <a
+                    key={sub.id}
+                    href={sub.image_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-square rounded-lg overflow-hidden border border-border bg-muted focus:outline-none focus:ring-2 focus:ring-action-blue"
+                  >
+                    <img
+                      src={sub.image_url}
+                      alt="Approved submission"
+                      className="w-full h-full object-cover"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Map */}
         <div className="bg-card rounded-xl sm:rounded-2xl shadow-lg overflow-hidden h-[400px] sm:h-[500px] md:h-[600px]">
           <QuestMap
@@ -287,6 +502,87 @@ export default function QuestSharePage() {
             hideViewQuestButton={true}
           />
         </div>
+
+        {/* Submit section: photo + submit (only for joined, non-creator users) */}
+        {hasJoined && !isCreator && (
+          <div
+            id="submit"
+            ref={submitSectionRef}
+            className="mt-4 sm:mt-6 bg-card rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 border border-border relative"
+          >
+            {submissionResult ? (
+              <SubmissionResult
+                success={submissionResult === "success"}
+                pendingReview={submissionResult === "pending_review"}
+                verificationResult={submissionData?.verification_result}
+                rejectionReason={submissionData?.rejection_reason}
+                questSlug={quest.slug || undefined}
+                submittedImageUrl={submissionData?.image_url}
+                contentMatchScore={submissionData?.content_match_score}
+                geminiGrade={submissionData?.gemini_result?.grade}
+                onTryAgain={() => {
+                  setSubmissionResult(null);
+                  setSubmissionData(null);
+                  setSubmissionError(null);
+                }}
+              />
+            ) : (
+              <>
+                {isUploading && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 rounded-xl sm:rounded-2xl">
+                    <div className="flex flex-col items-center gap-3">
+                      <CircleNotch className="w-12 h-12 text-action-blue animate-spin" weight="regular" />
+                      <p className="text-sm font-medium text-foreground">Verifying submission...</p>
+                    </div>
+                  </div>
+                )}
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">Submit your photo</h2>
+                <p className="text-sm text-text-secondary mb-4">
+                  Take a photo at the location (when you&apos;re in the quest area) or upload an existing photo from anywhere.
+                </p>
+                <div className="mb-4">
+                  <GPSStatus
+                    questLocation={quest.location}
+                    questRadius={quest.radius_meters}
+                    onLocationReady={handleLocationReady}
+                  />
+                </div>
+                <div className="mb-4">
+                  <h3 className="text-base font-medium text-foreground mb-2">Add a Photo</h3>
+                  <PhotoInput
+                    onCapture={handlePhotoCapture}
+                    disabled={isUploading}
+                    takePhotoDisabled={!gpsReady}
+                  />
+                </div>
+                {photo && (
+                  <div className="mb-4">
+                    <Button
+                      onClick={handleSubmitPhoto}
+                      disabled={isUploading}
+                      className="w-full touch-manipulation"
+                      size="lg"
+                    >
+                      {isUploading ? (
+                        <>
+                          <CircleNotch className="w-5 h-5 mr-2 animate-spin" weight="regular" />
+                          Verifying Submission...
+                        </>
+                      ) : (
+                        "Submit Photo"
+                      )}
+                    </Button>
+                  </div>
+                )}
+                {submissionError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                    {submissionError}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

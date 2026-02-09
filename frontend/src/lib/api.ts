@@ -339,6 +339,8 @@ export const questAPI = {
     radius_meters: number;
     visibility: 'public' | 'private';
     photo_count: number;
+    participant_count?: number;
+    submission_count?: number;
     has_joined?: boolean | null;
     start_date?: string;
     end_date?: string;
@@ -529,7 +531,8 @@ export const submissionAPI = {
     questId: string,
     imageFile: File,
     location: { lat: number; lng: number; accuracy?: number },
-    capturedAt: string
+    capturedAt: string,
+    captureMethod: "live" | "upload" = "live"
   ): Promise<{
     id: string;
     quest_id: string;
@@ -546,6 +549,8 @@ export const submissionAPI = {
     status: string;
     rejection_reason?: string;
     submitted_at: string;
+    capture_method?: string;
+    gemini_result?: { grade?: string; content_match_score?: number; [key: string]: unknown };
   }> => {
     const token = tokenStorage.getAccessToken();
     if (!token) {
@@ -557,6 +562,7 @@ export const submissionAPI = {
     formData.append('quest_id', questId);
     formData.append('location', JSON.stringify(location));
     formData.append('captured_at', capturedAt);
+    formData.append('capture_method', captureMethod);
 
     const response = await fetch(`${API_BASE_URL}/submissions`, {
       method: 'POST',
@@ -568,8 +574,13 @@ export const submissionAPI = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const message =
+        errorData.detail ||
+        errorData.message ||
+        (Array.isArray(errorData.detail) ? errorData.detail.map((d: any) => d?.msg ?? d).join(", ") : null) ||
+        `Request failed: ${response.statusText}`;
       throw new APIError(
-        errorData.message || `Request failed: ${response.statusText}`,
+        typeof message === "string" ? message : "Request failed",
         response.status,
         errorData
       );
@@ -602,9 +613,13 @@ export const submissionAPI = {
   },
 
   /**
-   * Get all submissions for a quest (quest creator only)
+   * Get all submissions for a quest (quest creator only).
+   * Optionally filter by status (e.g. { status: 'verified' } for approved only).
    */
-  getQuestSubmissions: async (questId: string): Promise<Array<{
+  getQuestSubmissions: async (
+    questId: string,
+    options?: { status?: string }
+  ): Promise<Array<{
     id: string;
     quest_id: string;
     explorer_id: string;
@@ -621,7 +636,8 @@ export const submissionAPI = {
     rejection_reason?: string;
     submitted_at: string;
   }>> => {
-    return apiRequest(`/submissions/quest/${questId}`);
+    const params = options?.status ? `?status=${encodeURIComponent(options.status)}` : "";
+    return apiRequest(`/submissions/quest/${questId}${params}`);
   },
 };
 

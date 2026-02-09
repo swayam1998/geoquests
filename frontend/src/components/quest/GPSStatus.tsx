@@ -75,7 +75,9 @@ export function GPSStatus({ questLocation, questRadius, onLocationReady }: GPSSt
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      console.error("GPS error:", error);
+      const codeLabel = error.code === 1 ? "PERMISSION_DENIED" : error.code === 2 ? "POSITION_UNAVAILABLE" : error.code === 3 ? "TIMEOUT" : "UNKNOWN";
+      // Log as warn so timeouts/permission denied don’t show as red errors (UI already shows “GPS signal weak”)
+      console.warn("GPS:", codeLabel, error.message || "Unable to get location");
       setStatus("weak");
     };
 
@@ -135,7 +137,9 @@ export function GPSStatus({ questLocation, questRadius, onLocationReady }: GPSSt
             <div>
               <p className="font-medium text-sm sm:text-base text-yellow-700">GPS signal weak</p>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Move to an open area for better signal. Current accuracy: {accuracy ? `${Math.round(accuracy)}m` : "N/A"}
+                {accuracy != null
+                  ? `Move to an open area for better signal. Current accuracy: ${Math.round(accuracy)}m`
+                  : "Allow location access in your browser settings or try again in an open area. You can still upload a photo."}
               </p>
             </div>
           )}
