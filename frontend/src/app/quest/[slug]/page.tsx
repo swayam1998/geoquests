@@ -425,7 +425,7 @@ export default function QuestSharePage() {
               <Button
                 onClick={handleScrollToSubmit}
                 size="lg"
-                className="flex-1 sm:flex-initial sm:min-w-[200px]"
+                className="flex-1 sm:flex-initial sm:min-w-[200px] text-sm sm:text-base"
               >
                 <Camera className="w-5 h-5 mr-2" weight="regular" />
                 Submit Quest
@@ -435,7 +435,7 @@ export default function QuestSharePage() {
               <Button
                 onClick={handleJoinQuest}
                 disabled={isJoining || !isAuthenticated}
-                className="flex-1 sm:flex-initial sm:min-w-[200px] disabled:opacity-50"
+                className="flex-1 sm:flex-initial sm:min-w-[200px] disabled:opacity-50 text-sm sm:text-base"
               >
                 {isJoining ? "Joining..." : "Join Quest"}
               </Button>
@@ -443,7 +443,7 @@ export default function QuestSharePage() {
             {!isAuthenticated && (
               <Button
                 onClick={() => router.push("/login")}
-                className="flex-1 sm:flex-initial sm:min-w-[200px]"
+                className="flex-1 sm:flex-initial sm:min-w-[200px] text-sm sm:text-base"
               >
                 Sign in to Join Quest
               </Button>

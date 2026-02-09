@@ -377,13 +377,17 @@ export default function HomePage() {
         >
           {/* Description text + button */}
           <div className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 px-6 sm:px-8 md:px-10 lg:px-14 pb-4 sm:pb-6 md:pb-8 lg:pb-10 w-full md:w-[55%] lg:w-[40%]">
-            <p className="text-sm sm:text-base md:text-lg lg:text-[1.75rem] text-foreground/80 leading-relaxed">
-              Create quests to discover, explore hidden 
-              gems in your neighborhood, and connect with your community through 
-              shared experiences wherever they are to help you make 
-              meaningful connections one quest at a time.
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-foreground/80 leading-relaxed">
+              GeoQuests gets you real-time ground truth from 
+              the people actually standing on the ground. Whether you are 
+              monitoring assets, planning a perfect day or 
+              scouting your next adventure  
+              we give you the eyes on the ground to explore 
+              and decide with absolute confidence.
+
+
             </p>
-            <Button asChild className="mt-5 w-fit gap-2">
+            <Button asChild className="mt-5 w-fit gap-2 text-sm sm:text-base">
               <Link href="/#map">
                 Start exploring
                 <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">

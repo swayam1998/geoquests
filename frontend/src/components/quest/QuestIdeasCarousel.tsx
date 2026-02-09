@@ -53,7 +53,7 @@ export function QuestIdeasCarousel({ ideas, onIdeaClick }: QuestIdeasCarouselPro
                   e.stopPropagation();
                   onIdeaClick?.(idea);
                 }}
-                className="w-full gap-1.5 group/btn"
+                className="w-full gap-1.5 group/btn text-sm sm:text-base"
               >
                 Create Quest
                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" weight="bold" />
