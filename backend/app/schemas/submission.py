@@ -43,6 +43,8 @@ class SubmissionResponse(BaseModel):
     captured_location: Dict[str, float]  # {lat, lng}
     captured_accuracy: Optional[float]
     captured_at: datetime
+    capture_method: str = "live"
+    gemini_result: Optional[Dict[str, Any]] = None
     verification_result: Optional[Dict[str, Any]]
     content_match_score: Optional[int]
     quality_score: Optional[int]

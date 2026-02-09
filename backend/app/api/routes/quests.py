@@ -13,6 +13,7 @@ from app.database import get_db
 from app.auth.dependencies import get_current_user, get_current_user_optional
 from app.schemas.quest import QuestCreate, QuestResponse, QuestShareResponse
 from app.models.quest import Quest, QuestStatus, QuestVisibility, QuestParticipant, QuestParticipantStatus
+from app.models.submission import Submission, SubmissionStatus
 from app.models.user import User
 from app.config import settings
 
@@ -59,6 +60,12 @@ def build_quest_response(quest: Quest, db: Session, current_user: Optional[User]
         QuestParticipant.status != QuestParticipantStatus.LEFT
     ).count()
     
+    # Get verified submission count
+    submission_count = db.query(Submission).filter(
+        Submission.quest_id == quest.id,
+        Submission.status == SubmissionStatus.VERIFIED
+    ).count()
+    
     # Check if current user has joined
     has_joined = None
     if current_user:
@@ -88,6 +95,7 @@ def build_quest_response(quest: Quest, db: Session, current_user: Optional[User]
         slug=quest.slug,
         share_link=share_link,
         participant_count=participant_count,
+        submission_count=submission_count,
         has_joined=has_joined,
         start_date=quest.start_date,
         end_date=quest.end_date,
@@ -282,6 +290,12 @@ async def get_quests(
                     QuestParticipant.status != QuestParticipantStatus.LEFT
                 ).count()
                 
+                # Get verified submission count (completed photos)
+                submission_count = db.query(Submission).filter(
+                    Submission.quest_id == quest.id,
+                    Submission.status == SubmissionStatus.VERIFIED
+                ).count()
+                
                 # Check if current user has joined
                 has_joined = None
                 if current_user:
@@ -311,6 +325,7 @@ async def get_quests(
                     slug=quest.slug,
                     share_link=share_link,
                     participant_count=participant_count,
+                    submission_count=submission_count,
                     has_joined=has_joined,
                     start_date=quest.start_date,
                     end_date=quest.end_date,

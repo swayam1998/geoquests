@@ -27,7 +27,8 @@ async def get_authorization_url() -> Tuple[str, str]:
     state = secrets.token_urlsafe(32)
     authorization_url = await google_oauth_client.get_authorization_url(
         redirect_uri=settings.GOOGLE_REDIRECT_URI,
-        state=state
+        state=state,
+        extras_params={"prompt": "select_account"},
     )
     return authorization_url, state
 

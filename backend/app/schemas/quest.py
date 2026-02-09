@@ -58,6 +58,7 @@ class QuestResponse(BaseModel):
     slug: Optional[str] = None
     share_link: Optional[str] = None
     participant_count: int = 0
+    submission_count: int = 0  # Number of verified (approved) photo submissions
     has_joined: Optional[bool] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None

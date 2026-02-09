@@ -1,5 +1,5 @@
 """Submission model for quest photo submissions."""
-from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -14,6 +14,8 @@ class SubmissionStatus(str, enum.Enum):
     """Submission status options."""
     PENDING = "pending"
     PROCESSING = "processing"
+    AI_REVIEW = "ai_review"
+    PENDING_REVIEW = "pending_review"
     VERIFIED = "verified"
     REJECTED = "rejected"
 
@@ -44,6 +46,8 @@ class Submission(Base):
     
     # Image storage
     image_url_full = Column(String(500), nullable=False)
+    capture_method = Column(String(10), nullable=False, default="live")  # "live" or "upload"
+    gemini_result = Column(JSONB, nullable=True)
     
     # Location data
     captured_location = Column(
@@ -76,9 +80,7 @@ class Submission(Base):
     explorer = relationship("User", backref="submissions")
     
     __table_args__ = (
-        # Unique constraint: one submission per user per quest
-        UniqueConstraint('quest_id', 'explorer_id', name='uq_submission_quest_explorer'),
-        # Indexes for common queries
+        # Indexes for common queries (users may submit multiple photos per quest)
         Index('idx_submissions_status', 'status'),
         Index('idx_submissions_quest_status', 'quest_id', 'status'),
     )

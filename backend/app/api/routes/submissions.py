@@ -1,7 +1,7 @@
 """Submission API routes."""
 import logging
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status as http_status, Path, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status as http_status, Path, Query, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
@@ -24,6 +24,7 @@ from app.services.photo_processor import (
     check_image_quality,
     validate_exif_location
 )
+from app.services.gemini_verifier import verify_with_gemini
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,8 @@ def build_submission_response(submission: Submission, db: Session) -> Submission
         captured_location={"lat": float(location_result.lat), "lng": float(location_result.lng)},
         captured_accuracy=submission.captured_accuracy,
         captured_at=submission.captured_at,
+        capture_method=getattr(submission, "capture_method", "live"),
+        gemini_result=getattr(submission, "gemini_result", None),
         verification_result=submission.verification_result,
         content_match_score=submission.content_match_score,
         quality_score=submission.quality_score,
@@ -70,6 +73,7 @@ async def create_submission(
     quest_id: str = Form(..., description="Quest ID"),
     location: str = Form(..., description="Location JSON"),
     captured_at: str = Form(..., description="ISO timestamp when photo was captured"),
+    capture_method: str = Form("live", description="How photo was obtained: 'live' or 'upload'"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -152,19 +156,9 @@ async def create_submission(
                 headers={"X-Error-Code": "QUEST_NOT_ACTIVE"}
             )
         
-        # Check if user already submitted
-        existing = db.query(Submission).filter(
-            Submission.quest_id == quest_uuid,
-            Submission.explorer_id == current_user.id
-        ).first()
-        
-        if existing:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="You have already submitted a photo for this quest",
-                headers={"X-Error-Code": "ALREADY_COMPLETED"}
-            )
-        
+        # Normalize capture_method
+        if capture_method not in ("live", "upload"):
+            capture_method = "live"
         # Create submission record (status: pending)
         submission_id = uuid.uuid4()
         submission = Submission(
@@ -175,6 +169,7 @@ async def create_submission(
             captured_location=WKTElement(f"POINT({location_obj.lng} {location_obj.lat})", srid=4326),
             captured_accuracy=location_obj.accuracy,
             captured_at=captured_at_dt,
+            capture_method=capture_method,
             status=SubmissionStatus.PROCESSING
         )
         db.add(submission)
@@ -267,6 +262,52 @@ async def create_submission(
                     "reason": "No GPS data in EXIF (warning only)"
                 }
             
+            # 5. Gemini Vision verification
+            exif_has_no_gps = (capture_method == "upload" and not exif_data.get("has_gps"))
+            logger.info("Running Gemini verification for submission %s (quest=%s)", submission_id, quest_uuid)
+            gemini_result = verify_with_gemini(
+                processed_image,
+                quest.title,
+                quest.description or "",
+                exif_has_no_gps=exif_has_no_gps,
+            )
+            submission.gemini_result = gemini_result
+            if gemini_result:
+                logger.info(
+                    "Submission %s: Gemini verified image (grade=%s, score=%s)",
+                    submission_id,
+                    gemini_result.get("grade"),
+                    gemini_result.get("content_match_score"),
+                )
+                submission.content_match_score = gemini_result.get("content_match_score")
+                verification_result["gemini"] = gemini_result
+                # Hybrid rejection logic
+                if gemini_result.get("is_screenshot_or_screen_photo") or gemini_result.get("is_ai_generated"):
+                    verification_errors.append({
+                        "code": "AI_REJECT_SCREEN_OR_FAKE",
+                        "message": "Photo appears to be a screenshot, photo of a screen, or AI-generated. Please submit an authentic photo taken at the location."
+                    })
+                elif not gemini_result.get("is_authentic_photo", True):
+                    verification_errors.append({
+                        "code": "AI_REJECT_INAUTHENTIC",
+                        "message": "Photo could not be verified as authentic. Please submit a real photo taken at the location."
+                    })
+                else:
+                    min_score = settings.GEMINI_CONTENT_MATCH_MIN_SCORE
+                    score = gemini_result.get("content_match_score") or 0
+                    if score < min_score:
+                        reasoning = (gemini_result.get("reasoning") or "").strip()
+                        msg = "Photo doesn't appear to match the quest. Please take a photo of the correct subject at the location."
+                        if reasoning:
+                            msg += f" Hint: {reasoning[:200]}" + ("..." if len(reasoning) > 200 else "")
+                        verification_errors.append({
+                            "code": "AI_REJECT_CONTENT_MISMATCH",
+                            "message": msg,
+                        })
+            else:
+                verification_result["gemini"] = None
+                logger.info("Submission %s: Gemini did not return a result (API key missing or call failed); allowing submission", submission_id)
+            
             # Build full verification result
             verification_result.update({
                 "quality": {
@@ -308,7 +349,7 @@ async def create_submission(
             relative_path = save_image(processed_image, quest_uuid, submission_id)
             submission.image_url_full = relative_path
             
-            # Mark as verified
+            # Direct result: all checks passed → verified (no pending_review; user gets immediate pass/fail)
             submission.status = SubmissionStatus.VERIFIED
             db.commit()
             db.refresh(submission)
@@ -412,6 +453,7 @@ async def get_submission(
 @router.get("/quest/{quest_id}", response_model=List[SubmissionResponse])
 async def get_quest_submissions(
     quest_id: str = Path(..., description="Quest ID"),
+    status: Optional[str] = Query(None, description="Filter by status, e.g. 'verified' for approved only"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -422,6 +464,7 @@ async def get_quest_submissions(
     
     Args:
         quest_id: Quest UUID
+        status: Optional filter (e.g. 'verified' for approved submissions only)
         db: Database session
         current_user: Current authenticated user
     
@@ -455,9 +498,10 @@ async def get_quest_submissions(
                 detail="Only the quest creator can view submissions"
             )
         
-        submissions = db.query(Submission).filter(
-            Submission.quest_id == quest_uuid
-        ).order_by(Submission.submitted_at.desc()).all()
+        query = db.query(Submission).filter(Submission.quest_id == quest_uuid)
+        if status == "verified":
+            query = query.filter(Submission.status == SubmissionStatus.VERIFIED)
+        submissions = query.order_by(Submission.submitted_at.desc()).all()
         
         return [build_submission_response(sub, db) for sub in submissions]
     

@@ -109,7 +109,9 @@ def extract_exif_metadata(image_bytes: bytes) -> Dict:
         "gps_lat": None,
         "gps_lng": None,
         "timestamp": None,
+        "gps_timestamp": None,
         "camera_model": None,
+        "software": None,
         "has_exif": False
     }
     
@@ -155,6 +157,24 @@ def extract_exif_metadata(image_bytes: bytes) -> Dict:
             result["camera_model"] = str(tags['Image Model'])
         elif 'EXIF LensModel' in tags:
             result["camera_model"] = str(tags['EXIF LensModel'])
+        
+        # Software tag (e.g. Photoshop, GIMP - useful as edit flag)
+        if 'Image Software' in tags:
+            result["software"] = str(tags['Image Software'])
+        
+        # GPS timestamp for cross-reference with captured_at
+        if 'GPS GPSDate' in tags and 'GPS GPSTimeStamp' in tags:
+            try:
+                gps_date = str(tags['GPS GPSDate'])
+                gps_time = tags['GPS GPSTimeStamp']
+                if gps_time.values:
+                    h, m, s = float(gps_time.values[0]), float(gps_time.values[1]), float(gps_time.values[2])
+                    time_str = f"{int(h):02d}:{int(m):02d}:{int(s):02d}"
+                    result["gps_timestamp"] = datetime.strptime(
+                        f"{gps_date} {time_str}", "%Y:%m:%d %H:%M:%S"
+                    )
+            except (ValueError, IndexError, TypeError):
+                pass
     
     except Exception as e:
         # If EXIF extraction fails, return default result

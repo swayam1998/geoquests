@@ -6,6 +6,9 @@ from typing import Optional
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
+    # Server (Railway sets PORT)
+    PORT: int = 8000
+    
     # Database
     DATABASE_URL: str = "postgresql://geoquests:geoquests_dev@localhost:5432/geoquests"
     
@@ -35,6 +38,18 @@ class Settings(BaseSettings):
     ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/jpg"]
     API_URL: str = "http://localhost:8000"
     
+    # Gemini AI verification (https://ai.google.dev/gemini-api/docs/models)
+    GEMINI_API_KEY: str = ""
+    # Model: gemini-2.0-flash, gemini-2.5-flash, gemini-3-flash-preview, or gemini-3-pro-preview
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    # Gemini 3 only: "LOW", "MEDIUM", "HIGH" (empty or "OFF" = disabled). Better reasoning, more tokens/time.
+    GEMINI_THINKING_LEVEL: str = ""
+    # Minimum content_match_score (0-100) to accept a photo. Below this, submission is rejected for content mismatch.
+    GEMINI_CONTENT_MATCH_MIN_SCORE: int = 15
+
+    # CORS: comma-separated list of extra origins (e.g. staging URL). FRONTEND_URL is always allowed.
+    CORS_ORIGINS: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True
