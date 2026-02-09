@@ -452,15 +452,17 @@ export function CreateQuestPanel({
             <div className="flex items-center gap-2">
               <Label id="quest-type-label" htmlFor="quest-type" className="leading-none">Quest Type</Label>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
-                    aria-label="Quest type information"
-                  >
-                    <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
-                  </button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                      aria-label="Quest type information"
+                    >
+                      <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
+                    </button>
+                  }
+                />
                 <TooltipContent side="bottom" align="center" className="max-w-64">
                   <p>Paid quests are disabled for now. Please use Open Quest to create your quest. Paid quests will allow you to set start and end dates (coming soon).</p>
                 </TooltipContent>
@@ -563,15 +565,17 @@ export function CreateQuestPanel({
             <div className="flex items-center gap-2">
               <Label className="text-muted-foreground leading-none">End Date (Optional)</Label>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
-                    aria-label="Why is end date disabled?"
-                  >
-                    <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
-                  </button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                      aria-label="Why is end date disabled?"
+                    >
+                      <InfoIcon className="w-4 h-4 text-muted-foreground" weight="regular" />
+                    </button>
+                  }
+                />
                 <TooltipContent side="bottom" align="center" className="max-w-64">
                   <p>End date is available for paid quests (coming soon). For open quests, quests have no expiration.</p>
                 </TooltipContent>

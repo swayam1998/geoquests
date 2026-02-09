@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { questAPI, submissionAPI } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
 import { QuestMap } from "@/components/map/QuestMap";
@@ -295,12 +296,28 @@ export default function QuestSharePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-page-gradient-from via-page-gradient-via to-page-gradient-to">
+      <div className="relative min-h-screen bg-hero-bg grain-overlay">
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <Image
+            src="/images/cloud-left.png"
+            alt=""
+            width={436}
+            height={486}
+            className="absolute left-0 bottom-[25%] max-md:hidden"
+          />
+          <Image
+            src="/images/cloud-right.png"
+            alt=""
+            width={436}
+            height={486}
+            className="absolute right-0 top-[8%] max-md:hidden"
+          />
+        </div>
         <Header />
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-action-blue mx-auto mb-4"></div>
-            <p className="text-text-secondary">Loading quest...</p>
+            <p className="text-hero-text">Loading quest...</p>
           </div>
         </div>
       </div>
@@ -309,9 +326,25 @@ export default function QuestSharePage() {
 
   if (error || !quest) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-page-gradient-from via-page-gradient-via to-page-gradient-to">
+      <div className="relative min-h-screen bg-hero-bg grain-overlay">
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <Image
+            src="/images/cloud-left.png"
+            alt=""
+            width={436}
+            height={486}
+            className="absolute left-0 bottom-[25%] max-md:hidden"
+          />
+          <Image
+            src="/images/cloud-right.png"
+            alt=""
+            width={436}
+            height={486}
+            className="absolute right-0 top-[8%] max-md:hidden"
+          />
+        </div>
         <Header />
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error || "Quest not found"}</p>
             <Button onClick={() => router.push("/")}>
@@ -326,12 +359,30 @@ export default function QuestSharePage() {
   const questForMap = convertToQuest(quest);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-page-gradient-from via-page-gradient-via to-page-gradient-to">
+    <div className="relative min-h-screen bg-hero-bg grain-overlay">
+      {/* Decorative clouds - same as hero */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <Image
+          src="/images/cloud-left.png"
+          alt=""
+          width={436}
+          height={486}
+          className="absolute left-0 bottom-[25%] max-md:hidden"
+        />
+        <Image
+          src="/images/cloud-right.png"
+          alt=""
+          width={436}
+          height={486}
+          className="absolute right-0 top-[8%] max-md:hidden"
+        />
+      </div>
+
       <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-page-content pb-6 sm:pb-8">
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-page-content pb-6 sm:pb-8">
         {/* Quest Details Card */}
-        <div className="bg-card rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-white shadow-xl shadow-black/15 p-4 sm:p-6 mb-4 sm:mb-6">
           {/* Title - stays on top */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-2 sm:gap-3 mb-4">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground break-words text-center">{quest.title}</h1>
@@ -488,7 +539,7 @@ export default function QuestSharePage() {
         )}
 
         {/* Map */}
-        <div className="bg-card rounded-xl sm:rounded-2xl shadow-lg overflow-hidden h-[400px] sm:h-[500px] md:h-[600px]">
+        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-white shadow-xl shadow-black/15 overflow-hidden h-[400px] sm:h-[500px] md:h-[600px]">
           <QuestMap
             quests={[questForMap]}
             selectedQuestId={quest.id}
