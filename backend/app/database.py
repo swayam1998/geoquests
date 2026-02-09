@@ -3,9 +3,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
+# SQLAlchemy 2.x only accepts postgresql://; many providers (e.g. Railway) give postgres://
+_database_url = settings.DATABASE_URL
+if _database_url.startswith("postgres://"):
+    _database_url = "postgresql://" + _database_url[10:]
+
 # Create database engine
 engine = create_engine(
-    settings.DATABASE_URL,
+    _database_url,
     pool_pre_ping=True,  # Verify connections before using
     echo=False,  # Set to True for SQL query logging
 )
