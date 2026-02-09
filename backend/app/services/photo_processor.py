@@ -1,32 +1,43 @@
 """Photo processing service for quest submissions."""
 import io
 from PIL import Image, ImageFilter, ImageStat
-import mediapipe as mp
 import exifread
 from typing import Dict, Tuple, Optional
 from datetime import datetime
-import numpy as np  # Only needed for MediaPipe (MediaPipe requires numpy arrays)
+
+# MediaPipe/OpenCV are optional: they need libxcb etc. on Linux. Lazy-import so the app
+# starts in headless environments (e.g. Railway) and face blur is best-effort.
+_face_detection = None
 
 
-# Initialize MediaPipe Face Detection
-mp_face_detection = mp.solutions.face_detection
-face_detection = mp_face_detection.FaceDetection(
-    model_selection=0,  # 0 for short-range, 1 for full-range
-    min_detection_confidence=0.5
-)
+def _get_face_detection():
+    """Lazy-init MediaPipe face detection; returns None if import fails (e.g. missing libxcb)."""
+    global _face_detection
+    if _face_detection is not None:
+        return _face_detection
+    try:
+        import mediapipe as mp
+        mp_face_detection = mp.solutions.face_detection
+        _face_detection = mp_face_detection.FaceDetection(
+            model_selection=0,
+            min_detection_confidence=0.5,
+        )
+        return _face_detection
+    except Exception:
+        return None
 
 
 def detect_and_blur_faces(image_bytes: bytes) -> Tuple[bytes, int, int]:
     """
     Detect faces in image and blur them for privacy.
-    
-    Args:
-        image_bytes: Image file bytes
-    
-    Returns:
-        Tuple of (processed_image_bytes, faces_detected, faces_blurred)
+    If MediaPipe/OpenCV are unavailable (e.g. headless server), returns original image and (0, 0).
     """
+    face_detection = _get_face_detection()
+    if face_detection is None:
+        return image_bytes, 0, 0
+
     try:
+        import numpy as np
         # Load image with PIL
         img = Image.open(io.BytesIO(image_bytes))
         # Convert to RGB if needed
@@ -67,22 +78,15 @@ def detect_and_blur_faces(image_bytes: bytes) -> Tuple[bytes, int, int]:
                 
                 if face_roi.size[0] > 0 and face_roi.size[1] > 0:
                     # Apply Gaussian blur (using PIL's GaussianBlur filter)
-                    # Use a large radius for strong blur
                     blurred_face = face_roi.filter(ImageFilter.GaussianBlur(radius=20))
-                    
-                    # Paste blurred face back onto image
                     img.paste(blurred_face, (x, y))
                     faces_blurred += 1
         
-        # Convert back to bytes
         output = io.BytesIO()
         img.save(output, format='JPEG', quality=90)
-        processed_bytes = output.getvalue()
-        
-        return processed_bytes, faces_detected, faces_blurred
+        return output.getvalue(), faces_detected, faces_blurred
     
-    except Exception as e:
-        # If processing fails, return original
+    except Exception:
         return image_bytes, 0, 0
 
 
