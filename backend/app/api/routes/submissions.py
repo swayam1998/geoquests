@@ -1,7 +1,8 @@
 """Submission API routes."""
 import logging
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status as http_status, Path, Query, UploadFile, File, Form
+from urllib.parse import urlparse
+from fastapi import APIRouter, Depends, HTTPException, Request, status as http_status, Path, Query, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
@@ -32,8 +33,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 
-def build_submission_response(submission: Submission, db: Session) -> SubmissionResponse:
-    """Build a SubmissionResponse from a Submission model."""
+def _request_origin(request: Request) -> str:
+    """
+    Return the request origin (scheme + host) for building image URLs.
+    Uses X-Forwarded-Proto and X-Forwarded-Host when present (e.g. behind Railway/reverse proxy)
+    so production image URLs point to the public API, not the internal proxy host.
+    """
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    forwarded_host = request.headers.get("x-forwarded-host")
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto.strip()}://{forwarded_host.strip().split(',')[0].strip()}"
+    u = urlparse(str(request.url))
+    return f"{u.scheme}://{u.netloc}"
+
+
+def build_submission_response(submission: Submission, db: Session, base_url: Optional[str] = None) -> SubmissionResponse:
+    """Build a SubmissionResponse from a Submission model.
+    base_url: API origin (e.g. https://api.example.com). If not set, uses settings.API_URL for image URLs.
+    """
     # Extract location
     location_result = db.query(
         func.ST_X(text("submissions.captured_location::geometry")).label('lng'),
@@ -46,11 +63,12 @@ def build_submission_response(submission: Submission, db: Session) -> Submission
             detail="Failed to extract submission location"
         )
     
+    static_base = f"{base_url.rstrip('/')}/static" if base_url else None
     return SubmissionResponse(
         id=submission.id,
         quest_id=submission.quest_id,
         explorer_id=submission.explorer_id,
-        image_url=get_image_url(submission.image_url_full),
+        image_url=get_image_url(submission.image_url_full, base_url=static_base),
         captured_location={"lat": float(location_result.lat), "lng": float(location_result.lng)},
         captured_accuracy=submission.captured_accuracy,
         captured_at=submission.captured_at,
@@ -69,6 +87,7 @@ def build_submission_response(submission: Submission, db: Session) -> Submission
 
 @router.post("", response_model=SubmissionResponse, status_code=http_status.HTTP_201_CREATED)
 async def create_submission(
+    request: Request,
     image: UploadFile = File(..., description="Photo image file"),
     quest_id: str = Form(..., description="Quest ID"),
     location: str = Form(..., description="Location JSON"),
@@ -356,7 +375,8 @@ async def create_submission(
             
             logger.info(f"Submission {submission_id} verified successfully for quest {quest_uuid}")
             
-            return build_submission_response(submission, db)
+            base_url = _request_origin(request)
+            return build_submission_response(submission, db, base_url=base_url)
         
         except Exception as e:
             logger.error(f"Error processing submission {submission_id}: {str(e)}", exc_info=True)
@@ -382,6 +402,7 @@ async def create_submission(
 
 @router.get("/{submission_id}", response_model=SubmissionResponse)
 async def get_submission(
+    request: Request,
     submission_id: str = Path(..., description="Submission ID"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -438,7 +459,8 @@ async def get_submission(
                 detail="You don't have access to this submission"
             )
         
-        return build_submission_response(submission, db)
+        base_url = _request_origin(request)
+        return build_submission_response(submission, db, base_url=base_url)
     
     except HTTPException:
         raise
@@ -452,6 +474,7 @@ async def get_submission(
 
 @router.get("/quest/{quest_id}", response_model=List[SubmissionResponse])
 async def get_quest_submissions(
+    request: Request,
     quest_id: str = Path(..., description="Quest ID"),
     status: Optional[str] = Query(None, description="Filter by status, e.g. 'verified' for approved only"),
     db: Session = Depends(get_db),
@@ -503,7 +526,8 @@ async def get_quest_submissions(
             query = query.filter(Submission.status == SubmissionStatus.VERIFIED)
         submissions = query.order_by(Submission.submitted_at.desc()).all()
         
-        return [build_submission_response(sub, db) for sub in submissions]
+        base_url = _request_origin(request)
+        return [build_submission_response(sub, db, base_url=base_url) for sub in submissions]
     
     except HTTPException:
         raise

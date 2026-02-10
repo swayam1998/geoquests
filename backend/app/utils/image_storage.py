@@ -63,14 +63,14 @@ def get_image_url(relative_path: str, base_url: str = None) -> str:
     
     Args:
         relative_path: Relative path to image (from save_image)
-        base_url: Base URL for static files (defaults to settings.API_URL/static)
+        base_url: Base URL for static files (e.g. https://api.example.com/static).
+                  If None, uses settings.API_URL/static so set API_URL in production.
     
     Returns:
         Full URL to image
     """
     if base_url is None:
-        # Default to localhost for MVP
-        api_url = getattr(settings, 'API_URL', 'http://localhost:8000')
+        api_url = getattr(settings, 'API_URL', 'http://localhost:8000').rstrip('/')
         base_url = f"{api_url}/static"
     
     # Remove leading slash if present
