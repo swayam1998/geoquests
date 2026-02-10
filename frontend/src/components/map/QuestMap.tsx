@@ -57,6 +57,9 @@ function getMapPinMarkerDataUrl(color: string = "#ef4444", size: number = 60): s
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
 }
 
+// Single shared URL for all quest markers (avoids creating 100+ data URLs per render)
+const DEFAULT_QUEST_MARKER_ICON_URL = getMapPinMarkerDataUrl("#ef4444", 60);
+
 // Helper for clicked location marker (blue pin for quest being created, slightly larger)
 function getClickedLocationMarkerDataUrl(): string {
   return getMapPinMarkerDataUrl("#3B82F6", 70); // Blue color to differentiate from existing quests
@@ -738,22 +741,20 @@ export function QuestMap({
         }}
       >
         {/* Quest Markers */}
-        {quests.map((quest) => {
-          return (
-            <Marker
-              key={quest.id}
-              position={{ lat: quest.location.lat, lng: quest.location.lng }}
-              icon={{
-                url: getMapPinMarkerDataUrl("#ef4444", 60),
-                scaledSize: new google.maps.Size(60, 75),
-                anchor: new google.maps.Point(30, 75),
-              }}
-              onClick={() => handleMarkerClick(quest)}
-              onMouseOver={() => handleMarkerHover(quest)}
-              onMouseOut={handleMarkerLeave}
-            />
-          );
-        })}
+        {quests.map((quest) => (
+          <Marker
+            key={quest.id}
+            position={{ lat: quest.location.lat, lng: quest.location.lng }}
+            icon={{
+              url: DEFAULT_QUEST_MARKER_ICON_URL,
+              scaledSize: new google.maps.Size(60, 75),
+              anchor: new google.maps.Point(30, 75),
+            }}
+            onClick={() => handleMarkerClick(quest)}
+            onMouseOver={() => handleMarkerHover(quest)}
+            onMouseOut={handleMarkerLeave}
+          />
+        ))}
 
         {/* InfoWindow for selected quest (on click) */}
         {selectedQuest && (

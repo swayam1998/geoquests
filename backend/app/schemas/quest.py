@@ -44,6 +44,17 @@ class QuestCreate(BaseModel):
         return False
 
 
+class QuestUpdate(BaseModel):
+    """Schema for updating a quest (partial update, creator only)."""
+    title: Optional[str] = Field(None, min_length=1, max_length=200, description="Quest title")
+    description: Optional[str] = Field(None, min_length=1, description="Quest description")
+    lat: Optional[float] = Field(None, ge=-90, le=90, description="Latitude")
+    lng: Optional[float] = Field(None, ge=-180, le=180, description="Longitude")
+    radius_meters: Optional[int] = Field(None, ge=10, le=1000, description="Radius in meters")
+    visibility: Optional[QuestVisibility] = Field(None, description="Quest visibility")
+    photo_count: Optional[int] = Field(None, ge=1, le=5, description="Number of photos required")
+
+
 class QuestResponse(BaseModel):
     """Schema for quest response."""
     id: UUID
@@ -57,6 +68,7 @@ class QuestResponse(BaseModel):
     is_paid: bool
     slug: Optional[str] = None
     share_link: Optional[str] = None
+    cover_image_url: Optional[str] = None
     participant_count: int = 0
     submission_count: int = 0  # Number of verified (approved) photo submissions
     has_joined: Optional[bool] = None

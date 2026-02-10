@@ -57,6 +57,30 @@ def save_image(
     return relative_path
 
 
+def save_quest_cover_image(
+    image_bytes: bytes,
+    quest_id: UUID,
+    base_dir: str = None
+) -> str:
+    """
+    Save quest cover image to local filesystem.
+
+    Args:
+        image_bytes: Image file bytes (JPEG preferred)
+        quest_id: Quest UUID
+        base_dir: Base directory for uploads
+
+    Returns:
+        Relative path to saved image (e.g., "quests/{quest_id}/cover.jpg")
+    """
+    upload_base = ensure_upload_directory(base_dir)
+    quest_dir = upload_base / "quests" / str(quest_id)
+    quest_dir.mkdir(parents=True, exist_ok=True)
+    image_path = quest_dir / "cover.jpg"
+    image_path.write_bytes(image_bytes)
+    return f"quests/{quest_id}/cover.jpg"
+
+
 def get_image_url(relative_path: str, base_url: str = None) -> str:
     """
     Get full URL for serving an image.

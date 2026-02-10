@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
-import { QuestMap } from "@/components/map/QuestMap";
+import { CircleNotch } from "@phosphor-icons/react";
 import { QuestIdeasCarousel } from "@/components/quest/QuestIdeasCarousel";
 import { QuestsTable } from "@/components/quest/QuestsTable";
 import { getShuffledIdeas } from "@/lib/quest-ideas";
@@ -73,38 +74,55 @@ const convertApiQuestToQuest = (apiQuest: {
 // Default map center when user location is not yet available
 const DEFAULT_MAP_CENTER: [number, number] = [40.74, -73.99];
 
+// Lazy-load map so Google script and map bundle load only when user scrolls to map
+const DynamicQuestMap = dynamic(
+  () => import("@/components/map/QuestMap").then((m) => ({ default: m.QuestMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full min-h-[400px] text-muted-foreground">
+        <CircleNotch className="w-10 h-10 animate-spin" weight="regular" aria-hidden />
+        <span className="sr-only">Loading map...</span>
+      </div>
+    ),
+  }
+);
+
 // Memoized Map component to prevent re-renders
-const MemoizedMap = ({ 
-  quests, 
-  onQuestClick, 
+const MemoizedMap = ({
+  quests,
+  onQuestClick,
   onQuestCreated,
   selectedQuestId,
   prefillData,
   center,
   userLocation,
-}: { 
-  quests: Quest[], 
-  onQuestClick: (quest: Quest) => void,
-  onQuestCreated: (questId: string) => void,
-  selectedQuestId: string | null,
-  prefillData: { title: string; description: string } | null,
-  center: [number, number],
-  userLocation: { lat: number; lng: number; accuracy?: number } | null,
+}: {
+  quests: Quest[];
+  onQuestClick: (quest: Quest) => void;
+  onQuestCreated: (questId: string) => void;
+  selectedQuestId: string | null;
+  prefillData: { title: string; description: string } | null;
+  center: [number, number];
+  userLocation: { lat: number; lng: number; accuracy?: number } | null;
 }) => {
-  return useMemo(() => (
-    <QuestMap
-      quests={quests}
-      onQuestClick={onQuestClick}
-      onQuestCreated={onQuestCreated}
-      selectedQuestId={selectedQuestId}
-      prefillData={prefillData}
-      center={center}
-      userLocation={userLocation}
-      zoom={12}
-      className="w-full h-full"
-      showSearch={true}
-    />
-  ), [quests, onQuestClick, onQuestCreated, selectedQuestId, prefillData, center, userLocation]);
+  return useMemo(
+    () => (
+      <DynamicQuestMap
+        quests={quests}
+        onQuestClick={onQuestClick}
+        onQuestCreated={onQuestCreated}
+        selectedQuestId={selectedQuestId}
+        prefillData={prefillData}
+        center={center}
+        userLocation={userLocation}
+        zoom={12}
+        className="w-full h-full"
+        showSearch={true}
+      />
+    ),
+    [quests, onQuestClick, onQuestCreated, selectedQuestId, prefillData, center, userLocation]
+  );
 };
 
 export default function HomePage() {
@@ -120,6 +138,8 @@ export default function HomePage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const creamSectionRef = useRef<HTMLElement>(null);
   const creamInnerRef = useRef<HTMLDivElement>(null);
+  const questTableSectionRef = useRef<HTMLElement>(null);
+  const [questsTableVisible, setQuestsTableVisible] = useState(false);
 
   const { location: userLocation } = useUserLocation();
   // Center map on user's location once when we first get it; otherwise use default
@@ -131,20 +151,36 @@ export default function HomePage() {
   }, [userLocation, initialMapCenter]);
   const mapCenter = initialMapCenter ?? DEFAULT_MAP_CENTER;
 
-  // Fetch quests from API
+  // Fetch quests from API (smaller initial batch for faster first paint, then fetch rest in background)
   const fetchQuests = useCallback(async () => {
     try {
       setIsLoadingQuests(true);
-      const apiQuests = await questAPI.getQuests({ 
+      const initialLimit = 50;
+      const apiQuests = await questAPI.getQuests({
         status: 'active',
         visibility: 'public',
-        limit: 100 
+        limit: initialLimit,
       });
       const convertedQuests = apiQuests.map(convertApiQuestToQuest);
       setQuests(convertedQuests);
+
+      // If we got a full page, fetch the rest in the background so map/table can show more
+      if (apiQuests.length >= initialLimit) {
+        questAPI
+          .getQuests({
+            status: 'active',
+            visibility: 'public',
+            limit: 100,
+            offset: initialLimit,
+          })
+          .then((more) => {
+            const moreConverted = more.map(convertApiQuestToQuest);
+            setQuests((prev) => [...prev, ...moreConverted]);
+          })
+          .catch(() => {});
+      }
     } catch (error) {
       console.error('Failed to fetch quests:', error);
-      // Fallback to empty array on error
       setQuests([]);
     } finally {
       setIsLoadingQuests(false);
@@ -249,6 +285,22 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
+  // IntersectionObserver for quest table: only render full table when section is in view
+  useEffect(() => {
+    const el = questTableSectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setQuestsTableVisible(true);
+      },
+      { rootMargin: "100px 0px", threshold: 0 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Handle quest click - navigate to map and center on quest
   const handleQuestClick = useCallback((quest: Quest) => {
     // Set the selected quest ID
@@ -309,12 +361,12 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-hero-bg grain-overlay">
       {/* Header */}
       <Header />
 
-      {/* Hero Section - sticky so content scrolls over it (mindmarket pattern) */}
-      <section className="sticky top-0 z-0 h-screen overflow-hidden bg-hero-bg grain-overlay">
+      {/* Hero Section - slightly shorter than viewport so cream section peeks; sticky so content scrolls over it */}
+      <section className="sticky top-0 z-0 h-[95vh] min-h-[500px] overflow-hidden bg-hero-bg grain-overlay">
         {/* Decorative clouds - parallax, fade out with hero text */}
         <div 
           className="absolute inset-0 z-2 pointer-events-none overflow-hidden will-change-transform"
@@ -412,7 +464,7 @@ export default function HomePage() {
               ${mapVisible ? 'opacity-100' : 'opacity-0'}`}
           >
             <div className="w-full h-[60vh] md:h-[70vh] min-h-[500px] max-h-[800px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white/90">
-              {isMounted && (
+              {mapVisible && (
                 <MemoizedMap 
                   quests={quests} 
                   onQuestClick={handleQuestClick}
@@ -430,13 +482,28 @@ export default function HomePage() {
 
       {/* Main Content - Quests Table */}
       <main className="relative z-5 bg-background pt-8 pb-32 pb-32-safe">
-        {/* Quests Table Section */}
-        <section className="px-4 md:px-8 mb-16">
+        {/* Quests Table Section - full table renders only when in view */}
+        <section ref={questTableSectionRef} className="px-4 md:px-8 mb-16">
           <div className="max-w-4xl mx-auto">
-            <QuestsTable
-              quests={quests}
-              onQuestClick={handleQuestClick}
-            />
+            {isLoadingQuests ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <CircleNotch className="w-12 h-12 text-brand animate-spin" weight="regular" aria-hidden />
+                <p className="text-sm text-muted-foreground">Loading quests...</p>
+              </div>
+            ) : !questsTableVisible ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Quests</h2>
+                <p className="text-sm text-muted-foreground">
+                  {quests.length} {quests.length === 1 ? "quest" : "quests"} — scroll down to view
+                </p>
+              </div>
+            ) : (
+              <QuestsTable
+                quests={quests}
+                onQuestClick={handleQuestClick}
+                userLocation={userLocation}
+              />
+            )}
           </div>
         </section>
       </main>

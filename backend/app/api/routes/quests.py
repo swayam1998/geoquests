@@ -11,11 +11,13 @@ from typing import List, Optional
 from datetime import datetime, timezone
 from app.database import get_db
 from app.auth.dependencies import get_current_user, get_current_user_optional
-from app.schemas.quest import QuestCreate, QuestResponse, QuestShareResponse
+from app.schemas.quest import QuestCreate, QuestUpdate, QuestResponse, QuestShareResponse
 from app.models.quest import Quest, QuestStatus, QuestVisibility, QuestParticipant, QuestParticipantStatus
 from app.models.submission import Submission, SubmissionStatus
 from app.models.user import User
 from app.config import settings
+from app.utils.image_storage import get_image_url, save_quest_cover_image
+from app.services.quest_cover import generate_quest_cover
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +83,9 @@ def build_quest_response(quest: Quest, db: Session, current_user: Optional[User]
     if quest.slug:
         base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
         share_link = f"{base_url}/quest/{quest.slug}"
-    
+
+    cover_image_url = get_image_url(quest.cover_image_path) if quest.cover_image_path else None
+
     return QuestResponse(
         id=quest.id,
         creator_id=quest.creator_id,
@@ -94,6 +98,7 @@ def build_quest_response(quest: Quest, db: Session, current_user: Optional[User]
         is_paid=quest.is_paid,
         slug=quest.slug,
         share_link=share_link,
+        cover_image_url=cover_image_url,
         participant_count=participant_count,
         submission_count=submission_count,
         has_joined=has_joined,
@@ -179,6 +184,17 @@ async def create_quest(
             quest.start_date = quest.created_at
             db.commit()
             db.refresh(quest)
+        
+        # Generate and save cover image (Gemini Nano Banana); do not fail quest creation on error
+        cover_bytes = generate_quest_cover(quest.title, quest.description)
+        if cover_bytes:
+            try:
+                relative_path = save_quest_cover_image(cover_bytes, quest.id)
+                quest.cover_image_path = relative_path
+                db.commit()
+                db.refresh(quest)
+            except Exception as e:
+                logger.warning("Failed to save quest cover image: %s", e, exc_info=True)
         
         return build_quest_response(quest, db, current_user)
         
@@ -272,8 +288,41 @@ async def get_quests(
             
             # Create a map of quest_id -> location for quick lookup
             location_map = {loc.id: {"lat": float(loc.lat), "lng": float(loc.lng)} for loc in location_results}
+            
+            # Batch participant counts (one query for all quests)
+            participant_rows = db.query(
+                QuestParticipant.quest_id,
+                func.count(QuestParticipant.id).label("cnt")
+            ).filter(
+                QuestParticipant.quest_id.in_(quest_ids),
+                QuestParticipant.status != QuestParticipantStatus.LEFT
+            ).group_by(QuestParticipant.quest_id).all()
+            participant_count_map = {row.quest_id: row.cnt for row in participant_rows}
+            
+            # Batch submission counts (one query for all quests)
+            submission_rows = db.query(
+                Submission.quest_id,
+                func.count(Submission.id).label("cnt")
+            ).filter(
+                Submission.quest_id.in_(quest_ids),
+                Submission.status == SubmissionStatus.VERIFIED
+            ).group_by(Submission.quest_id).all()
+            submission_count_map = {row.quest_id: row.cnt for row in submission_rows}
+            
+            # Batch has_joined for current user (one query)
+            joined_quest_ids = set()
+            if current_user:
+                joined_rows = db.query(QuestParticipant.quest_id).filter(
+                    QuestParticipant.quest_id.in_(quest_ids),
+                    QuestParticipant.user_id == current_user.id,
+                    QuestParticipant.status != QuestParticipantStatus.LEFT
+                ).all()
+                joined_quest_ids = {row.quest_id for row in joined_rows}
         else:
             location_map = {}
+            participant_count_map = {}
+            submission_count_map = {}
+            joined_quest_ids = set()
         
         for quest in quests:
             try:
@@ -284,33 +333,17 @@ async def get_quests(
                 
                 logger.debug(f"Quest {quest.id}: visibility={quest.visibility}, status={quest.status}, status_value={quest.status.value if hasattr(quest.status, 'value') else 'N/A'}")
                 
-                # Get participant count
-                participant_count = db.query(QuestParticipant).filter(
-                    QuestParticipant.quest_id == quest.id,
-                    QuestParticipant.status != QuestParticipantStatus.LEFT
-                ).count()
-                
-                # Get verified submission count (completed photos)
-                submission_count = db.query(Submission).filter(
-                    Submission.quest_id == quest.id,
-                    Submission.status == SubmissionStatus.VERIFIED
-                ).count()
-                
-                # Check if current user has joined
-                has_joined = None
-                if current_user:
-                    participant = db.query(QuestParticipant).filter(
-                        QuestParticipant.quest_id == quest.id,
-                        QuestParticipant.user_id == current_user.id,
-                        QuestParticipant.status != QuestParticipantStatus.LEFT
-                    ).first()
-                    has_joined = participant is not None
+                participant_count = participant_count_map.get(quest.id, 0)
+                submission_count = submission_count_map.get(quest.id, 0)
+                has_joined = (quest.id in joined_quest_ids) if current_user else None
                 
                 # Build share link
                 share_link = None
                 if quest.slug:
                     base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
                     share_link = f"{base_url}/quest/{quest.slug}"
+                
+                cover_image_url = get_image_url(quest.cover_image_path) if quest.cover_image_path else None
                 
                 result.append(QuestResponse(
                     id=quest.id,
@@ -324,6 +357,7 @@ async def get_quests(
                     is_paid=quest.is_paid,
                     slug=quest.slug,
                     share_link=share_link,
+                    cover_image_url=cover_image_url,
                     participant_count=participant_count,
                     submission_count=submission_count,
                     has_joined=has_joined,
@@ -381,6 +415,18 @@ async def get_quest(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail="Quest not found"
             )
+        
+        # Backfill slug for older quests that don't have one (so slug-based URLs work)
+        if quest.slug is None:
+            try:
+                quest.slug = generate_slug(quest.title, quest.id)
+                db.add(quest)
+                db.commit()
+                db.refresh(quest)
+            except Exception as e:
+                db.rollback()
+                logger.warning(f"Failed to backfill slug for quest {quest.id}: {e}")
+                # Continue without slug; response will have slug=None
         
         # Check visibility for private quests
         if quest.visibility == QuestVisibility.PRIVATE:
@@ -601,4 +647,127 @@ async def get_quest_share_link(
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get share link: {str(e)}"
+        )
+
+
+def _get_quest_by_id_or_slug(quest_id: str, db: Session) -> Optional[Quest]:
+    """Resolve a quest by UUID or slug. Returns None if not found."""
+    try:
+        quest_uuid = uuid.UUID(quest_id)
+        return db.query(Quest).filter(Quest.id == quest_uuid).first()
+    except ValueError:
+        return db.query(Quest).filter(Quest.slug == quest_id).first()
+
+
+@router.patch("/{quest_id}", response_model=QuestResponse)
+async def update_quest(
+    quest_id: str = Path(..., description="Quest ID or slug"),
+    quest_data: QuestUpdate = ...,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update a quest. Only the creator can update.
+    
+    Args:
+        quest_id: Quest UUID or slug
+        quest_data: Fields to update (partial)
+        db: Database session
+        current_user: Current authenticated user
+        
+    Returns:
+        Updated quest
+        
+    Raises:
+        HTTPException: If quest not found or user is not the creator
+    """
+    quest = _get_quest_by_id_or_slug(quest_id, db)
+    if not quest:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Quest not found"
+        )
+    if quest.creator_id != current_user.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Only the quest creator can update this quest"
+        )
+
+    update_dict = quest_data.model_dump(exclude_unset=True)
+    if not update_dict:
+        return build_quest_response(quest, db, current_user)
+
+    if "title" in update_dict:
+        quest.title = update_dict["title"]
+        quest.slug = generate_slug(quest.title, quest.id)
+    if "description" in update_dict:
+        quest.description = update_dict["description"]
+    if "radius_meters" in update_dict:
+        quest.radius_meters = update_dict["radius_meters"]
+    if "visibility" in update_dict:
+        quest.visibility = update_dict["visibility"]
+    if "photo_count" in update_dict:
+        quest.photo_count = update_dict["photo_count"]
+    if "lat" in update_dict and "lng" in update_dict:
+        location = WKTElement(f"POINT({update_dict['lng']} {update_dict['lat']})", srid=4326)
+        quest.location = location
+    elif "lat" in update_dict or "lng" in update_dict:
+        # Require both if updating location
+        location_result = db.query(
+            func.ST_X(text("quests.location::geometry")).label('lng'),
+            func.ST_Y(text("quests.location::geometry")).label('lat')
+        ).filter(Quest.id == quest.id).first()
+        lng = update_dict.get("lng", float(location_result.lng))
+        lat = update_dict.get("lat", float(location_result.lat))
+        quest.location = WKTElement(f"POINT({lng} {lat})", srid=4326)
+
+    try:
+        db.commit()
+        db.refresh(quest)
+        return build_quest_response(quest, db, current_user)
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to update quest {quest_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update quest: {str(e)}"
+        )
+
+
+@router.delete("/{quest_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+async def delete_quest(
+    quest_id: str = Path(..., description="Quest ID or slug"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a quest. Only the creator can delete.
+    
+    Args:
+        quest_id: Quest UUID or slug
+        db: Database session
+        current_user: Current authenticated user
+        
+    Raises:
+        HTTPException: If quest not found or user is not the creator
+    """
+    quest = _get_quest_by_id_or_slug(quest_id, db)
+    if not quest:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Quest not found"
+        )
+    if quest.creator_id != current_user.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Only the quest creator can delete this quest"
+        )
+    try:
+        db.delete(quest)
+        db.commit()
+        logger.info(f"Quest {quest.id} deleted by user {current_user.id}")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to delete quest {quest_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete quest: {str(e)}"
         )

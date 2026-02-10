@@ -11,10 +11,24 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://geoquests.io";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "GeoQuests - Get a reason to explore the world",
   description: "Create and complete location-based photo quests. Share meaningful places, discover hidden gems, or get real-time crowd-sourced information.",
   keywords: ["quests", "location", "photo", "explore", "travel", "scavenger hunt"],
+  openGraph: {
+    title: "GeoQuests - Get a reason to explore the world",
+    description: "Create and complete location-based photo quests. Share meaningful places, discover hidden gems.",
+    siteName: "GeoQuests",
+    images: [{ url: "/images/hero-bg-web.png", width: 1200, height: 630, alt: "GeoQuests" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GeoQuests - Get a reason to explore the world",
+    description: "Create and complete location-based photo quests.",
+  },
 };
 
 export const viewport = {

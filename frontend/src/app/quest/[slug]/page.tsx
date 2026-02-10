@@ -14,7 +14,20 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { haversineDistance, formatDistance } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
-import { Check, MapPin, Users, Calendar, Camera, NavigationArrow, CircleNotch } from "@phosphor-icons/react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Check, MapPin, Users, Calendar, Camera, NavigationArrow, CircleNotch, PencilSimple, Trash } from "@phosphor-icons/react";
 
 interface QuestDetail {
   id: string;
@@ -31,6 +44,7 @@ interface QuestDetail {
   is_paid: boolean;
   slug: string | null;
   share_link: string | null;
+  cover_image_url?: string | null;
   participant_count: number;
   has_joined: boolean | null;
   start_date?: string;
@@ -77,6 +91,18 @@ export default function QuestSharePage() {
   const [submissionData, setSubmissionData] = useState<any>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
+  // Creator: edit and delete
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editRadius, setEditRadius] = useState(50);
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
+  const [editPhotoCount, setEditPhotoCount] = useState(1);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   // Calculate distance from user to quest
   const distanceToQuest = useMemo(() => {
     if (!userLocation || !quest) return null;
@@ -94,6 +120,19 @@ export default function QuestSharePage() {
 
   // Load approved submissions when viewer is the quest creator
   const isCreator = isAuthenticated && user && quest !== null && quest.creator_id === user.id;
+
+  // Sync edit form when opening edit dialog
+  useEffect(() => {
+    if (editDialogOpen && quest) {
+      setEditTitle(quest.title);
+      setEditDescription(quest.description);
+      setEditRadius(quest.radius_meters);
+      setEditIsPrivate(quest.visibility === "private");
+      setEditPhotoCount(quest.photo_count);
+      setEditError(null);
+    }
+  }, [editDialogOpen, quest]);
+
   useEffect(() => {
     if (!isCreator || !quest?.id) return;
     let cancelled = false;
@@ -253,6 +292,41 @@ export default function QuestSharePage() {
     }
   };
 
+  const handleUpdateQuest = async () => {
+    if (!quest || isUpdating) return;
+    setIsUpdating(true);
+    setEditError(null);
+    try {
+      const updated = await questAPI.updateQuest(quest.id, {
+        title: editTitle,
+        description: editDescription,
+        radius_meters: editRadius,
+        visibility: editIsPrivate ? "private" : "public",
+        photo_count: editPhotoCount,
+      });
+      setQuest(updated);
+      setEditDialogOpen(false);
+    } catch (err: any) {
+      setEditError(err.message || "Failed to update quest");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteQuest = async () => {
+    if (!quest || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await questAPI.deleteQuest(quest.id);
+      router.push("/");
+    } catch (err: any) {
+      console.error("Failed to delete quest:", err);
+      alert(err.message || "Failed to delete quest");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const convertToQuest = (questDetail: QuestDetail): Quest => {
     const getCategoryIcon = (title: string, description: string): string => {
       const text = (title + ' ' + description).toLowerCase();
@@ -381,6 +455,16 @@ export default function QuestSharePage() {
       <Header />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-page-content pb-6 sm:pb-8">
+        {/* Quest cover image (AI-generated) */}
+        {quest.cover_image_url && (
+          <div className="w-full aspect-2/1 sm:aspect-video rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white shadow-xl shadow-black/15 mb-4 sm:mb-6">
+            <img
+              src={quest.cover_image_url}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         {/* Quest Details Card */}
         <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-white shadow-xl shadow-black/15 p-4 sm:p-6 mb-4 sm:mb-6">
           {/* Title - stays on top */}
@@ -469,8 +553,24 @@ export default function QuestSharePage() {
           {/* Action Buttons */}
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             {isCreator ? (
-              // Creator view - no action needed since map is below
-              null
+              <>
+                <Button
+                  onClick={() => setEditDialogOpen(true)}
+                  variant="outline"
+                  className="flex-1 sm:flex-initial sm:min-w-[140px]"
+                >
+                  <PencilSimple className="w-5 h-5 mr-2" weight="regular" />
+                  Edit Quest
+                </Button>
+                <Button
+                  onClick={() => setDeleteDialogOpen(true)}
+                  variant="outline"
+                  className="flex-1 sm:flex-initial sm:min-w-[140px] text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <Trash className="w-5 h-5 mr-2" weight="regular" />
+                  Delete Quest
+                </Button>
+              </>
             ) : hasJoined ? (
               // User has joined - scroll to submit section below the map
               <Button
@@ -632,6 +732,104 @@ export default function QuestSharePage() {
             )}
           </div>
         )}
+
+        {/* Edit Quest dialog (creator only) */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Quest</DialogTitle>
+              <DialogDescription>
+                Update the title, description, and settings for your quest.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Quest title"
+                  maxLength={200}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="What explorers need to do..."
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Radius: {editRadius}m</Label>
+                <Slider
+                  value={[editRadius]}
+                  onValueChange={([v]) => setEditRadius(v ?? 50)}
+                  min={10}
+                  max={1000}
+                  step={10}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Photos required</Label>
+                <Slider
+                  value={[editPhotoCount]}
+                  onValueChange={([v]) => setEditPhotoCount(v ?? 1)}
+                  min={1}
+                  max={5}
+                  step={1}
+                />
+                <span className="text-xs text-muted-foreground">{editPhotoCount} photo(s)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-private">Private quest</Label>
+                <Switch
+                  id="edit-private"
+                  checked={editIsPrivate}
+                  onCheckedChange={setEditIsPrivate}
+                />
+              </div>
+              {editError && (
+                <p className="text-sm text-red-600">{editError}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateQuest} disabled={isUpdating}>
+                {isUpdating ? "Saving..." : "Save changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Quest</DialogTitle>
+              <DialogDescription>
+                This will permanently delete &quot;{quest?.title}&quot; and all associated data. Participants will no longer see this quest. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteQuest}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Quest"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

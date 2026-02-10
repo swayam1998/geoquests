@@ -97,7 +97,10 @@ async function apiRequest<T>(
             );
           }
           
-          return retryResponse.json();
+          if (retryResponse.status === 204) return {} as T;
+          const retryText = await retryResponse.text();
+          if (!retryText || retryText.trim() === '') return {} as T;
+          return JSON.parse(retryText) as T;
         }
       }
       
@@ -115,10 +118,17 @@ async function apiRequest<T>(
       );
     }
     
-    // Handle empty responses
+    // 204 No Content (e.g. DELETE) has no body
+    if (response.status === 204) {
+      return {} as T;
+    }
+    
+    // Handle empty body (some servers send content-type but no body)
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      return response.json();
+      const text = await response.text();
+      if (!text || text.trim() === '') return {} as T;
+      return JSON.parse(text) as T;
     }
     
     return {} as T;
@@ -379,6 +389,7 @@ export const questAPI = {
     is_paid: boolean;
     slug: string | null;
     share_link: string | null;
+    cover_image_url?: string | null;
     participant_count: number;
     has_joined: boolean | null;
     start_date?: string;
@@ -407,6 +418,54 @@ export const questAPI = {
     can_share: boolean;
   }> => {
     return apiRequest(`/quests/${questId}/share-link`);
+  },
+
+  /**
+   * Update a quest (creator only). Partial update; only provided fields are updated.
+   */
+  updateQuest: async (
+    idOrSlug: string,
+    data: {
+      title?: string;
+      description?: string;
+      lat?: number;
+      lng?: number;
+      radius_meters?: number;
+      visibility?: 'public' | 'private';
+      photo_count?: number;
+    }
+  ): Promise<{
+    id: string;
+    creator_id: string;
+    title: string;
+    description: string;
+    location: { lat: number; lng: number };
+    radius_meters: number;
+    visibility: 'public' | 'private';
+    photo_count: number;
+    is_paid: boolean;
+    slug: string | null;
+    share_link: string | null;
+    cover_image_url?: string | null;
+    participant_count: number;
+    has_joined: boolean | null;
+    start_date?: string;
+    end_date?: string;
+    status: string;
+    created_at: string;
+    updated_at?: string;
+  }> => {
+    return apiRequest(`/quests/${idOrSlug}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Delete a quest (creator only).
+   */
+  deleteQuest: async (idOrSlug: string): Promise<void> => {
+    await apiRequest(`/quests/${idOrSlug}`, { method: 'DELETE' });
   },
 };
 

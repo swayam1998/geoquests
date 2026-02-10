@@ -99,6 +99,9 @@ class Quest(Base):
     
     # Shareable slug for URLs
     slug = Column(String(255), unique=True, nullable=True, index=True)
+
+    # AI-generated cover image (relative path, e.g. quests/{id}/cover.jpg)
+    cover_image_path = Column(String(512), nullable=True)
     
     # Dates
     start_date = Column(DateTime(timezone=True), nullable=True)

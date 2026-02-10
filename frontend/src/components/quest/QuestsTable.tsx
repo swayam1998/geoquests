@@ -8,6 +8,8 @@ import { haversineDistance, formatDistance } from "@/lib/geo";
 interface QuestsTableProps {
   quests: Quest[];
   onQuestClick?: (quest: Quest) => void;
+  /** Pass from parent to avoid duplicate geolocation (e.g. home page already has location for map) */
+  userLocation?: { lat: number; lng: number; accuracy?: number } | null;
 }
 
 const COUNTRIES = [
@@ -22,10 +24,11 @@ const COUNTRIES = [
   { code: "IN", name: "India" },
 ];
 
-export function QuestsTable({ quests, onQuestClick }: QuestsTableProps) {
+export function QuestsTable({ quests, onQuestClick, userLocation: userLocationProp }: QuestsTableProps) {
   const [selectedCountry, setSelectedCountry] = useState("ALL");
   const [sortBy, setSortBy] = useState<"newest" | "popular" | "nearest">("newest");
-  const { location: userLocation } = useUserLocation();
+  const { location: userLocationFromHook } = useUserLocation();
+  const userLocation = userLocationProp !== undefined ? userLocationProp : userLocationFromHook;
 
   // Pre-compute distances for each quest
   const questDistances = useMemo(() => {
