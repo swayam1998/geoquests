@@ -455,7 +455,7 @@ export default function QuestSharePage() {
       <Header />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-page-content pb-6 sm:pb-8">
-        {/* Quest cover image (AI-generated) */}
+        {/* Quest cover image */}
         {quest.cover_image_url && (
           <div className="w-full aspect-2/1 sm:aspect-video rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white shadow-xl shadow-black/15 mb-4 sm:mb-6">
             <img

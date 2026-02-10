@@ -87,9 +87,6 @@ class Settings(BaseSettings):
     # Minimum content_match_score (0-100) to accept a photo. Below this, submission is rejected for content mismatch.
     GEMINI_CONTENT_MATCH_MIN_SCORE: int = 15
 
-    # Quest cover image generation (Nano Banana via Gemini API)
-    GEMINI_QUEST_COVER_ENABLED: bool = True
-
     # CORS: comma-separated list of extra origins (e.g. staging URL). FRONTEND_URL is always allowed.
     CORS_ORIGINS: str = ""
 

@@ -16,8 +16,7 @@ from app.models.quest import Quest, QuestStatus, QuestVisibility, QuestParticipa
 from app.models.submission import Submission, SubmissionStatus
 from app.models.user import User
 from app.config import settings
-from app.utils.image_storage import get_image_url, save_quest_cover_image
-from app.services.quest_cover import generate_quest_cover
+from app.utils.image_storage import get_image_url
 
 logger = logging.getLogger(__name__)
 
@@ -184,17 +183,6 @@ async def create_quest(
             quest.start_date = quest.created_at
             db.commit()
             db.refresh(quest)
-        
-        # Generate and save cover image (Gemini Nano Banana); do not fail quest creation on error
-        cover_bytes = generate_quest_cover(quest.title, quest.description)
-        if cover_bytes:
-            try:
-                relative_path = save_quest_cover_image(cover_bytes, quest.id)
-                quest.cover_image_path = relative_path
-                db.commit()
-                db.refresh(quest)
-            except Exception as e:
-                logger.warning("Failed to save quest cover image: %s", e, exc_info=True)
         
         return build_quest_response(quest, db, current_user)
         
