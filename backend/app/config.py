@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Server (Railway sets PORT)
     PORT: int = 8000
 
-    # Database
+    # Database (override in .env for production; default is local dev only)
     DATABASE_URL: str = "postgresql://geoquests:geoquests_dev@localhost:5432/geoquests"
 
     @field_validator("DATABASE_URL", mode="before")
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
             v = v.replace("postgres://", "postgresql://", 1)
         return v
     
-    # JWT
+    # JWT (must set SECRET_KEY in production)
     SECRET_KEY: str = "dev-secret-key-change-in-production-min-32-chars"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
     
-    # Magic Link
+    # Magic Link (must set MAGIC_LINK_SECRET_KEY in production)
     MAGIC_LINK_SECRET_KEY: str = "dev-magic-link-secret-change-in-production"
     MAGIC_LINK_EXPIRE_MINUTES: int = 15
     FRONTEND_URL: str = "http://localhost:3000"
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Gemini AI verification (https://ai.google.dev/gemini-api/docs/models)
     GEMINI_API_KEY: str = ""
     # Model: gemini-2.0-flash, gemini-2.5-flash, gemini-3-flash-preview, or gemini-3-pro-preview
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3-flash-preview"
     # Gemini 3 only: "LOW", "MEDIUM", "HIGH" (empty or "OFF" = disabled). Better reasoning, more tokens/time.
     GEMINI_THINKING_LEVEL: str = ""
     # Minimum content_match_score (0-100) to accept a photo. Below this, submission is rejected for content mismatch.
